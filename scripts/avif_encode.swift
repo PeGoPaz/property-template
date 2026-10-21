@@ -11,8 +11,18 @@ guard args.count == 4, let quality = Double(args[3]) else {
 }
 
 guard let source = CGImageSourceCreateWithURL(URL(fileURLWithPath: args[1]) as CFURL, nil),
-      let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+      let original = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
     FileHandle.standardError.write("cannot read \(args[1])\n".data(using: .utf8)!)
+    exit(65)
+}
+
+// Chrome decodes an ImageIO AVIF with an odd width or height as a fully
+// transparent image (seen on 1280x853 photos in Chrome 152).
+// Cropping the odd row or column away costs one pixel nobody will miss.
+let evenWidth = original.width & ~1
+let evenHeight = original.height & ~1
+guard let image = original.cropping(to: CGRect(x: 0, y: 0, width: evenWidth, height: evenHeight)) else {
+    FileHandle.standardError.write("cannot crop \(args[1]) to even dimensions\n".data(using: .utf8)!)
     exit(65)
 }
 
