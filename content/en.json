@@ -43,7 +43,7 @@
     "heroAlt": "{name} above Lake Garda",
     "bookingHeading": "Check Availability",
     "availableDates": "Available Dates",
-    "calendarHint": "Click a check-in date, then a check-out date (min. 3 nights).",
+    "calendarHint": "Click a check-in date, then a check-out date (min. {minNights} nights).",
     "adults": "Adults",
     "children": "Children",
     "totalPrice": "Total Price",

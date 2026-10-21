@@ -20,12 +20,29 @@ standard-library Python script.
 
 | File | What goes in it |
 |---|---|
-| `property.json` | Name, email, address, Formspree form ID, social links, photos, gallery and amenities |
+| `property.json` | Name, email, address, Formspree form ID, prices and stay rules, social links, photos, gallery and amenities |
 | `content/en.json` | Every piece of text on the site. `{name}` becomes the property's name |
 | `templates/` | Page layouts. Files starting with `_` are shared between pages |
 
 Leave `formspreeId` empty and the contact form opens the guest's email client
 instead.
+
+### Prices
+
+`booking` in `property.json` sets the currency, the minimum stay, the most
+guests allowed and the nightly rate for each season:
+
+```json
+"seasons": [
+  { "from": "06-01", "to": "06-15", "nightly": 600 },
+  { "from": "06-16", "to": "06-30", "nightly": 650 },
+  { "from": "12-20", "to": "01-06", "nightly": 400 }
+]
+```
+
+Dates are `MM-DD`, both ends included, and repeat every year. A season whose
+start is later than its end runs over New Year. Any night outside every season
+is closed and shown as such in the calendar. Overlapping seasons stop the build.
 
 ## Build and preview
 
@@ -39,6 +56,7 @@ a caption stops the build with a message saying which.
 
 ```bash
 python3 -m unittest discover -s tests
+node --test tests/*.test.js
 ```
 
 ## Photos

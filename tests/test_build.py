@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'scripts'))
 
 import build  # noqa: E402
-from build import BuildError, Markup, fill_name, render  # noqa: E402
+from build import BuildError, Markup, check_booking, fill_vars, render  # noqa: E402
 
 
 class RenderTest(unittest.TestCase):
@@ -41,10 +41,70 @@ class RenderTest(unittest.TestCase):
             render('{{ x | upper }}', {'x': 'a'})
 
 
-class FillNameTest(unittest.TestCase):
+class FillVarsTest(unittest.TestCase):
     def test_fills_nested_strings(self):
-        content = {'a': 'Stay at {name}', 'b': {'c': ['{name}!', 3]}}
-        self.assertEqual(fill_name(content, 'Casa'), {'a': 'Stay at Casa', 'b': {'c': ['Casa!', 3]}})
+        content = {'a': 'Stay at {name}', 'b': {'c': ['{name}, {minNights} nights', 3]}}
+        self.assertEqual(fill_vars(content, {'name': 'Casa', 'minNights': 3}),
+                         {'a': 'Stay at Casa', 'b': {'c': ['Casa, 3 nights', 3]}})
+
+    def test_leaves_unknown_braces_alone(self):
+        self.assertEqual(fill_vars('{price}', {'name': 'Casa'}), '{price}')
+
+
+def booking(**changes):
+    rules = {
+        'currency': 'EUR',
+        'minNights': 3,
+        'maxGuests': 8,
+        'seasons': [{'from': '04-01', 'to': '06-30', 'nightly': 180},
+                    {'from': '07-01', 'to': '08-31', 'nightly': 250}],
+    }
+    rules.update(changes)
+    return rules
+
+
+class CheckBookingTest(unittest.TestCase):
+    def test_example_rules_pass(self):
+        self.assertEqual(check_booking(booking()), [])
+        prop = json.loads((ROOT / 'property.json').read_text())
+        self.assertEqual(check_booking(prop['booking']), [])
+
+    def test_season_over_new_year(self):
+        self.assertEqual(check_booking(booking(seasons=[{'from': '12-15', 'to': '01-10', 'nightly': 300}])), [])
+
+    def test_leap_day(self):
+        self.assertEqual(check_booking(booking(seasons=[{'from': '02-29', 'to': '02-29', 'nightly': 99}])), [])
+
+    def test_overlapping_seasons(self):
+        problems = check_booking(booking(seasons=[{'from': '06-01', 'to': '06-30', 'nightly': 200},
+                                                  {'from': '06-15', 'to': '07-15', 'nightly': 250}]))
+        self.assertEqual(problems, ['seasons 1 and 2 both cover 06-15'])
+
+    def test_overlap_across_new_year(self):
+        problems = check_booking(booking(seasons=[{'from': '12-20', 'to': '01-05', 'nightly': 300},
+                                                  {'from': '01-01', 'to': '01-31', 'nightly': 200}]))
+        self.assertEqual(problems, ['seasons 1 and 2 both cover 01-01'])
+
+    def test_bad_dates_and_prices(self):
+        problems = check_booking(booking(seasons=[{'from': '02-30', 'to': '2026-03-01', 'nightly': 0},
+                                                  {'from': '05-01', 'to': '05-31', 'nightly': '200'}]))
+        self.assertEqual(problems, [
+            'season 1: "from" must be a date written MM-DD, got \'02-30\'',
+            'season 1: "to" must be a date written MM-DD, got \'2026-03-01\'',
+            'season 1: nightly must be a price above 0, got 0',
+            "season 2: nightly must be a price above 0, got '200'",
+        ])
+
+    def test_limits_and_currency(self):
+        problems = check_booking(booking(currency='euro', minNights=0, maxGuests=True))
+        self.assertEqual(problems, [
+            'currency must be a three-letter code such as "EUR"',
+            'minNights must be a whole number of at least 1',
+            'maxGuests must be a whole number of at least 1',
+        ])
+
+    def test_no_seasons(self):
+        self.assertEqual(check_booking(booking(seasons=[])), ['seasons must list at least one season'])
 
 
 class BuildTest(unittest.TestCase):
@@ -83,6 +143,7 @@ class BuildTest(unittest.TestCase):
         script = (self.out / 'js' / 'property.js').read_text()
         self.assertIn('"name": "Casa Esempio"', script)
         self.assertIn('"email": "hello@example.com"', script)
+        self.assertIn('"minNights": 3', script)
 
     def test_name_comes_from_property_json(self):
         self.edit_property(lambda p: p.update(name='Villa <Nova>'))
@@ -113,6 +174,19 @@ class BuildTest(unittest.TestCase):
         html = self.page('index')
         self.assertNotIn('aria-label="Facebook"', html)
         self.assertEqual(html.count('aria-label="Instagram"'), 3)
+
+    def test_stay_rules_reach_the_page(self):
+        self.edit_property(lambda p: p['booking'].update(minNights=5, maxGuests=4))
+        build.build(self.root, self.out)
+        html = self.page('index')
+        self.assertIn('(min. 5 nights)', html)
+        self.assertIn('id="adults" min="1" max="4"', html)
+        self.assertIn('id="children" min="0" max="3"', html)
+
+    def test_invalid_booking_rules_stop_the_build(self):
+        self.edit_property(lambda p: p['booking'].update(minNights=0))
+        with self.assertRaisesRegex(BuildError, 'booking:\n  minNights must be'):
+            build.build(self.root, self.out)
 
     def test_missing_required_field(self):
         self.edit_property(lambda p: (p.pop('email'), p['photos'].pop('hero')))

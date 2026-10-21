@@ -32,17 +32,17 @@
 
           <div class="form-group">
             <label for="adults">{{ t.home.adults }}</label>
-            <input type="number" id="adults" min="1" max="8" value="2" class="guest-input">
+            <input type="number" id="adults" min="1" max="{{ p.booking.maxGuests }}" value="2" class="guest-input">
           </div>
 
           <div class="form-group">
             <label for="children">{{ t.home.children }}</label>
-            <input type="number" id="children" min="0" max="7" value="0" class="guest-input">
+            <input type="number" id="children" min="0" max="{{ maxChildren }}" value="0" class="guest-input">
           </div>
 
           <div class="price-display" id="price-display" style="display: none;">
             <div class="price-label">{{ t.home.totalPrice }}</div>
-            <div class="price-amount" id="price-amount">€0</div>
+            <div class="price-amount" id="price-amount"></div>
             <div class="price-breakdown" id="price-breakdown"></div>
           </div>
 
@@ -101,6 +101,7 @@
   </main>
 
 {{ footer }}
+  <script src="js/pricing.js"></script>
   <script src="js/booking.js"></script>
   <script src="js/calendar.js"></script>
   <script src="js/reviews.js"></script>

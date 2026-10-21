@@ -14,7 +14,8 @@ links). Values are HTML-escaped. `| avif` and `| webp` swap a photo's .jpg for
 the sibling scripts/build_images.py generates. An unknown placeholder fails the
 build rather than shipping a page with a hole in it.
 
-Text in content/en.json may say {name}; it becomes the property's name.
+Text in content/en.json may say {name}, {minNights} or {maxGuests}; they are
+filled in from property.json.
 
   python3 scripts/build.py           build into _site/
   python3 scripts/build.py --serve   build, then serve it on http://localhost:8000
@@ -26,7 +27,7 @@ import json
 import re
 import shutil
 import sys
-from datetime import date
+from datetime import date, timedelta
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -39,7 +40,7 @@ PAGES = ['index', 'info', 'reviews', 'contact']
 PARTIALS = ['head', 'header', 'footer']
 STATIC = ['css', 'js', 'assets', 'availability.json', '_headers']
 
-REQUIRED = ['name', 'email', 'address', 'photos', 'gallery', 'amenities']
+REQUIRED = ['name', 'email', 'address', 'booking', 'photos', 'gallery', 'amenities']
 REQUIRED_PHOTOS = ['logo', 'favicon', 'appleTouchIcon', 'hero', 'exterior', 'view']
 
 PLACEHOLDER = re.compile(r'\{\{\s*([\w.-]+)\s*(?:\|\s*(\w+)\s*)?\}\}')
@@ -91,14 +92,16 @@ def render(template: str, context: dict, name: str = 'template') -> str:
     return PLACEHOLDER.sub(replace, template)
 
 
-def fill_name(value, name: str):
-    """Replace {name} in every string of the content tree."""
+def fill_vars(value, variables: dict):
+    """Replace {key} with variables[key] in every string of the content tree."""
     if isinstance(value, dict):
-        return {k: fill_name(v, name) for k, v in value.items()}
+        return {k: fill_vars(v, variables) for k, v in value.items()}
     if isinstance(value, list):
-        return [fill_name(v, name) for v in value]
+        return [fill_vars(v, variables) for v in value]
     if isinstance(value, str):
-        return value.replace('{name}', name)
+        for key, replacement in variables.items():
+            value = value.replace('{' + key + '}', str(replacement))
+        return value
     return value
 
 
@@ -198,11 +201,74 @@ def load_json(path: Path):
         raise BuildError(f'{path.relative_to(ROOT)}: {e}') from None
 
 
+MONTH_DAY = re.compile(r'^(\d{2})-(\d{2})$')
+
+
+def season_days(season: dict) -> set:
+    """The 'MM-DD' days a season covers, counted on a leap year so 02-29 exists."""
+    first = date(2024, *map(int, season['from'].split('-')))
+    last = date(2024, *map(int, season['to'].split('-')))
+    if last < first:  # runs over New Year
+        last = last.replace(year=2025)
+    days, day = set(), first
+    while day <= last:
+        days.add(day.strftime('%m-%d'))
+        day += timedelta(days=1)
+    return days
+
+
+def is_whole(value, minimum: int) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value >= minimum
+
+
+def check_booking(booking: dict) -> list:
+    """Everything wrong with the booking block, so one build reports it all."""
+    problems = []
+    if not (isinstance(booking.get('currency'), str) and re.fullmatch(r'[A-Z]{3}', booking['currency'])):
+        problems.append('currency must be a three-letter code such as "EUR"')
+    if not is_whole(booking.get('minNights'), 1):
+        problems.append('minNights must be a whole number of at least 1')
+    if not is_whole(booking.get('maxGuests'), 1):
+        problems.append('maxGuests must be a whole number of at least 1')
+
+    seasons = booking.get('seasons')
+    if not isinstance(seasons, list) or not seasons:
+        return problems + ['seasons must list at least one season']
+
+    covered = {}
+    for n, season in enumerate(seasons, 1):
+        ends_ok = True
+        for end in ('from', 'to'):
+            match = MONTH_DAY.match(str(season.get(end, '')))
+            try:
+                if not match:
+                    raise ValueError
+                date(2024, int(match[1]), int(match[2]))
+            except ValueError:
+                problems.append(f'season {n}: "{end}" must be a date written MM-DD, got {season.get(end)!r}')
+                ends_ok = False
+        nightly = season.get('nightly')
+        if isinstance(nightly, bool) or not isinstance(nightly, (int, float)) or nightly <= 0:
+            problems.append(f'season {n}: nightly must be a price above 0, got {nightly!r}')
+        if not ends_ok:
+            continue
+        for day in sorted(season_days(season)):
+            if day in covered:
+                problems.append(f'seasons {covered[day]} and {n} both cover {day}')
+                break
+            covered[day] = n
+    return problems
+
+
 def check_property(prop: dict, root: Path) -> None:
     missing = [key for key in REQUIRED if not prop.get(key)]
     missing += [f'photos.{key}' for key in REQUIRED_PHOTOS if not prop.get('photos', {}).get(key)]
     if missing:
         raise BuildError('property.json is missing ' + ', '.join(missing))
+
+    problems = check_booking(prop['booking'])
+    if problems:
+        raise BuildError('property.json booking:\n  ' + '\n  '.join(problems))
 
     files = list(prop['photos'].values())
     files += [g['src'] for g in prop['gallery']]
@@ -218,6 +284,7 @@ def context_for(prop: dict, text: dict) -> dict:
         'p': prop,
         't': text,
         'year': str(date.today().year),
+        'maxChildren': prop['booking']['maxGuests'] - 1,
         # An empty action makes js/contact.js fall back to a mailto: link.
         'formAction': f'https://formspree.io/f/{form_id}' if form_id else '',
         'social': {
@@ -232,7 +299,7 @@ def context_for(prop: dict, text: dict) -> dict:
 
 def property_script(prop: dict) -> str:
     """What the browser scripts need to know, as js/property.js."""
-    data = {'name': prop['name'], 'email': prop['email']}
+    data = {'name': prop['name'], 'email': prop['email'], 'booking': prop['booking']}
     return ('// Generated by scripts/build.py from property.json - do not edit.\n'
             f'window.PROPERTY = {json.dumps(data, ensure_ascii=False, indent=2)};\n')
 
@@ -240,7 +307,11 @@ def property_script(prop: dict) -> str:
 def build(root: Path = ROOT, out: Path = OUT) -> list:
     prop = load_json(root / 'property.json')
     check_property(prop, root)
-    text = fill_name(load_json(root / 'content' / 'en.json'), prop['name'])
+    text = fill_vars(load_json(root / 'content' / 'en.json'), {
+        'name': prop['name'],
+        'minNights': prop['booking']['minNights'],
+        'maxGuests': prop['booking']['maxGuests'],
+    })
 
     context = context_for(prop, text)
 

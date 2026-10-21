@@ -21,6 +21,9 @@ jobs:
       - name: Test the build script
         run: python -m unittest discover -s tests -v
 
+      - name: Test the browser scripts
+        run: node --test tests/*.test.js
+
       - name: Build the site
         run: python scripts/build.py
 

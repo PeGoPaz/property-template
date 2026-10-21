@@ -38,7 +38,8 @@
                  ['January','February','March','April','May','June',
                   'July','August','September','October','November','December'];
   const DAYS   = I18N ? I18N.days : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const OPEN_MONTHS = [4, 5, 6, 7, 8, 9, 10]; // Apr–Oct
+  // Seasons come from js/pricing.js (property.json → booking.seasons).
+  const PRICING = window.SITE_PRICING;
 
   // ──────────────────────────────────────────────
   // DATE HELPERS
@@ -56,7 +57,7 @@
   function isPast(d) { return d < today; }
 
   function isClosedSeason(d) {
-    return !OPEN_MONTHS.includes(d.getMonth() + 1);
+    return PRICING.rateFor(d) === null;
   }
 
   function isBlocked(d) {

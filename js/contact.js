@@ -19,6 +19,7 @@
   const LOCALE = I18N ? I18N.locale : 'en-US';
   // Set by js/property.js, which scripts/build.py generates from property.json.
   const EMAIL = (window.PROPERTY && window.PROPERTY.email) || '';
+  const PRICING = window.SITE_PRICING;
 
   // ──────────────────────────────────────────────
   // VALIDATE URL PARAMETERS
@@ -47,7 +48,7 @@
 
   const checkin    = validIsoDate(params.get('checkin'));
   const checkout   = validIsoDate(params.get('checkout'));
-  const guests     = validInt(params.get('guests'), 1, 8);
+  const guests     = validInt(params.get('guests'), 1, PRICING.maxGuests);
   const price      = validInt(params.get('price'), 0, 1000000);
   const nights     = validInt(params.get('nights'), 1, 365);
 
@@ -95,7 +96,7 @@
   if (checkin && checkout && guests && price) {
     const checkinFormatted  = formatHumanDate(checkin);
     const checkoutFormatted = formatHumanDate(checkout);
-    const priceFormatted    = Number(price).toLocaleString(LOCALE);
+    const priceFormatted    = PRICING.formatPrice(Number(price), LOCALE);
 
     // Populate hidden fields (for form submission)
     $checkin.value = checkin;

@@ -32,7 +32,7 @@
       calLoadFailed: '⚠ Live availability could not be loaded. Some dates shown as available may already be booked.',
       alreadyBooked: 'Already booked',
       checkoutOnly: 'Available as a check-out date only',
-      closedTooltip: 'Closed season (November–March)',
+      closedTooltip: 'Closed on this date',
 
       // Booking engine
       btnSelectDates: 'Select Dates',
@@ -46,11 +46,11 @@
       msgFutureDate: 'Check-in date must be in the future.',
       msgOrder: 'Check-out must be after check-in.',
       msgMinStay: 'Minimum stay is {min} nights. Your selection: {n} {nightsWord}.',
-      msgOpenSeason: 'The property is only open from April to October.',
-      msgCrossSeason: 'Your stay crosses into the closed season (Nov–Mar). Please adjust dates.',
+      msgOpenSeason: 'The property is closed on your check-in date.',
+      msgCrossSeason: 'Your stay includes nights when the property is closed. Please adjust dates.',
       msgClosedNights: 'Your stay includes nights in the closed season.',
       msgMinGuest: 'Please enter at least 1 guest.',
-      msgMaxGuests: 'Maximum 8 guests total (adults + children).',
+      msgMaxGuests: 'Maximum {max} guests total (adults + children).',
       msgAdultRequired: 'At least 1 adult is required.',
       msgConflict: 'These dates conflict with an existing booking ({date}). Please choose different dates.',
       msgStillLoading: '⚠ Availability data is still loading. Your selected dates may already be booked.',
@@ -73,7 +73,7 @@
       genericError: 'Something went wrong. Please try again.',
       networkError: 'Network error. Please check your connection and try again.',
       mailSubject: 'Booking Inquiry - {property}',
-      msgTemplate: 'Hello,\n\nI would like to request a booking at {property}:\n\n  Check-in:  {checkin}\n  Check-out: {checkout}\n  Guests:    {guests}\n  Duration:  {nights} {nightsWord}\n\n  Estimated Total Price: €{price}\n\nPlease confirm availability and let me know the next steps.\n\nThank you,',
+      msgTemplate: 'Hello,\n\nI would like to request a booking at {property}:\n\n  Check-in:  {checkin}\n  Check-out: {checkout}\n  Guests:    {guests}\n  Duration:  {nights} {nightsWord}\n\n  Estimated Total Price: {price}\n\nPlease confirm availability and let me know the next steps.\n\nThank you,',
 
       // Reviews page
       reviewsFrom: 'from {n} guest reviews',

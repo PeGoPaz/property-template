@@ -1,6 +1,7 @@
 /**
  * Booking engine
- * Handles: seasonal pricing, date validation, iCal availability, redirect flow.
+ * Handles: date validation, pricing, iCal availability, redirect flow.
+ * Rates and stay rules come from js/pricing.js (property.json → booking).
  */
 
 (function () {
@@ -10,11 +11,9 @@
   // CONFIG
   // ──────────────────────────────────────────────
 
+  const PRICING = window.SITE_PRICING;
+
   const CONFIG = {
-    /** Minimum stay in nights */
-    MIN_STAY: 3,
-    /** Operational months (1-indexed). All others are closed. */
-    OPEN_MONTHS: [4, 5, 6, 7, 8, 9, 10],
     /**
      * Availability data: a same-origin JSON list of blocked dates.
      * Resolved against this script rather than the page, so it works from
@@ -25,27 +24,12 @@
   };
 
   // ──────────────────────────────────────────────
-  // SEASONAL PRICING
-  // Returns the per-night rate (€) for a given Date.
+  // PRICING
   // ──────────────────────────────────────────────
-
-  function getNightRate(date) {
-    const month = date.getMonth() + 1; // 1-12
-
-    if (month === 4) return 180;
-    if (month === 5) return 200;
-    if (month === 6) return 240;
-    if (month === 7 || month === 8) return 280;
-    if (month === 9) return 220;
-    if (month === 10) return 180;
-
-    // Closed season (Nov–Mar)
-    return 0;
-  }
 
   /**
    * Calculate total price by iterating each individual night.
-   * A "night" is from check-in date D to D+1; the rate is based on D's month/day.
+   * A "night" is from check-in date D to D+1, priced by D's season.
    * Returns { total, nights, rateBreakdown[] }
    */
   function calculatePrice(checkIn, checkOut) {
@@ -55,8 +39,8 @@
 
     const cursor = new Date(checkIn);
     while (cursor < checkOut) {
-      const rate = getNightRate(cursor);
-      if (rate === 0) {
+      const rate = PRICING.rateFor(cursor);
+      if (rate === null) {
         // Night falls in closed season — invalidate
         return { total: 0, nights: 0, breakdown: [], closedSeason: true };
       }
@@ -100,9 +84,9 @@
     return new Date(+parts[0], +parts[1] - 1, +parts[2]);
   }
 
-  /** True if the date falls within operational months (Apr–Oct) */
+  /** True if the night starting on this date falls in a season */
   function isOperationalDate(date) {
-    return CONFIG.OPEN_MONTHS.includes(date.getMonth() + 1);
+    return PRICING.rateFor(date) !== null;
   }
 
   /** Count nights between two dates */
@@ -187,7 +171,7 @@
   }
 
   function setPriceText(value) {
-    $priceAmount.textContent = `€${value.toLocaleString(LOCALE)}`;
+    $priceAmount.textContent = PRICING.formatPrice(value, LOCALE);
   }
 
   /** Animate price counter from previous value to target value */
@@ -276,15 +260,15 @@
 
     const nights = nightCount(checkIn, checkOut);
 
-    if (nights < CONFIG.MIN_STAY) {
-      showMessage(T('msgMinStay', { min: CONFIG.MIN_STAY, n: nights, nightsWord: nightsWord(nights) }), 'error');
+    if (nights < PRICING.minNights) {
+      showMessage(T('msgMinStay', { min: PRICING.minNights, n: nights, nightsWord: nightsWord(nights) }), 'error');
       $btn.disabled = true;
       $btn.textContent = T('btnTooShort');
       $priceDisplay.style.display = 'none';
       return;
     }
 
-    // ── Season check: every night must fall in operational months ──
+    // ── Season check: every night must fall in a season ──
     if (!isOperationalDate(checkIn)) {
       showMessage(T('msgOpenSeason'), 'warning');
       $btn.disabled = true;
@@ -320,8 +304,8 @@
       return;
     }
 
-    if (totalGuests > 8) {
-      showMessage(T('msgMaxGuests'), 'error');
+    if (totalGuests > PRICING.maxGuests) {
+      showMessage(T('msgMaxGuests', { max: PRICING.maxGuests }), 'error');
       $btn.disabled = true;
       $btn.textContent = T('btnTooManyGuests');
       $priceDisplay.style.display = 'none';
