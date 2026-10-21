@@ -96,11 +96,12 @@ class CheckBookingTest(unittest.TestCase):
         ])
 
     def test_limits_and_currency(self):
-        problems = check_booking(booking(currency='euro', minNights=0, maxGuests=True))
+        problems = check_booking(booking(currency='euro', minNights=0, maxGuests=True, sameDayTurnover='no'))
         self.assertEqual(problems, [
             'currency must be a three-letter code such as "EUR"',
             'minNights must be a whole number of at least 1',
             'maxGuests must be a whole number of at least 1',
+            'sameDayTurnover must be true or false',
         ])
 
     def test_no_seasons(self):

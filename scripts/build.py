@@ -260,6 +260,8 @@ def check_booking(booking: dict) -> list:
         problems.append('minNights must be a whole number of at least 1')
     if not is_whole(booking.get('maxGuests'), 1):
         problems.append('maxGuests must be a whole number of at least 1')
+    if not isinstance(booking.get('sameDayTurnover', False), bool):
+        problems.append('sameDayTurnover must be true or false')
 
     seasons = booking.get('seasons')
     if not isinstance(seasons, list) or not seasons:

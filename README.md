@@ -66,6 +66,26 @@ build failed: translations do not match content/en.json:
 Reviews are shown in the guest's own language unless they carry a translation
 for the page's language, in which case the original is one click away.
 
+### Availability
+
+The calendar greys out every date in `availability.json`. The one in the
+repository is a made-up sample; `scripts/sync_availability.py` replaces it
+with the real bookings from the iCal feeds your platforms export. Booking.com,
+Airbnb and Vrbo each offer an export link in their calendar sync settings.
+
+```bash
+ICAL_URLS="https://ical.booking.com/v1/export?t=...
+https://www.airbnb.com/calendar/ical/....ics?s=..." python3 scripts/sync_availability.py
+```
+
+Bookings from every feed are merged. The day a stay ends stays closed to new
+arrivals, to leave time for cleaning, unless `booking.sameDayTurnover` is
+`true`. If any feed cannot be fetched nothing is written, because a calendar
+missing one platform's bookings would offer those dates again.
+
+Treat the feed URLs like passwords: anyone holding one can read your bookings.
+Keep them out of the repository; the script never prints them.
+
 ### Reviews
 
 Each review names its platform, the guest's score on that platform's scale

@@ -9,6 +9,7 @@
     "currency": "EUR",
     "minNights": 3,
     "maxGuests": 8,
+    "sameDayTurnover": false,
     "seasons": [
       { "from": "04-01", "to": "04-30", "nightly": 180 },
       { "from": "05-01", "to": "05-31", "nightly": 200 },
