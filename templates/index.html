@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
 {{ head }}
 </head>
@@ -9,9 +9,9 @@
   <main>
     <section class="hero">
       <picture>
-        <source type="image/avif" srcset="{{ p.photos.hero | avif }}">
-        <source type="image/webp" srcset="{{ p.photos.hero | webp }}">
-        <img src="{{ p.photos.hero }}" alt="{{ t.home.heroAlt }}" class="hero-image" fetchpriority="high">
+        <source type="image/avif" srcset="{{ photos.hero | avif }}">
+        <source type="image/webp" srcset="{{ photos.hero | webp }}">
+        <img src="{{ photos.hero }}" alt="{{ t.home.heroAlt }}" class="hero-image" fetchpriority="high">
       </picture>
       <div class="hero-overlay">
         <h1>{{ t.home.heroHeading }}</h1>
@@ -66,16 +66,16 @@
         <div class="image-grid" data-reveal-group>
           <div class="image-card">
             <picture>
-              <source type="image/avif" srcset="{{ p.photos.exterior | avif }}">
-              <source type="image/webp" srcset="{{ p.photos.exterior | webp }}">
-              <img src="{{ p.photos.exterior }}" alt="{{ t.photos.exterior }}" loading="lazy" decoding="async">
+              <source type="image/avif" srcset="{{ photos.exterior | avif }}">
+              <source type="image/webp" srcset="{{ photos.exterior | webp }}">
+              <img src="{{ photos.exterior }}" alt="{{ t.photos.exterior }}" loading="lazy" decoding="async">
             </picture>
           </div>
           <div class="image-card">
             <picture>
-              <source type="image/avif" srcset="{{ p.photos.view | avif }}">
-              <source type="image/webp" srcset="{{ p.photos.view | webp }}">
-              <img src="{{ p.photos.view }}" alt="{{ t.photos.view }}" loading="lazy" decoding="async">
+              <source type="image/avif" srcset="{{ photos.view | avif }}">
+              <source type="image/webp" srcset="{{ photos.view | webp }}">
+              <img src="{{ photos.view }}" alt="{{ t.photos.view }}" loading="lazy" decoding="async">
             </picture>
           </div>
         </div>
@@ -86,9 +86,9 @@
   </main>
 
 {{ footer }}
-  <script src="js/pricing.js"></script>
-  <script src="js/booking.js"></script>
-  <script src="js/calendar.js"></script>
-  <script src="js/reviews.js"></script>
+  <script src="{{ root }}js/pricing.js"></script>
+  <script src="{{ root }}js/booking.js"></script>
+  <script src="{{ root }}js/calendar.js"></script>
+  <script src="{{ root }}js/reviews.js"></script>
 </body>
 </html>

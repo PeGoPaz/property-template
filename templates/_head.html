@@ -4,7 +4,8 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="description" content="{{ page.description }}">
   <title>{{ page.title }}</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="{{ p.photos.favicon }}">
-  <link rel="apple-touch-icon" href="{{ p.photos.appleTouchIcon }}">
-  <script src="js/theme-init.js"></script>
-  <link rel="stylesheet" href="css/styles.css">
+{{ alternates }}
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ photos.favicon }}">
+  <link rel="apple-touch-icon" href="{{ photos.appleTouchIcon }}">
+  <script src="{{ root }}js/theme-init.js"></script>
+  <link rel="stylesheet" href="{{ root }}css/styles.css">

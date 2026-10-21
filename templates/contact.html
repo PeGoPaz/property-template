@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
 {{ head }}
 </head>
@@ -9,9 +9,9 @@
   <main>
     <section class="contact-hero">
       <picture>
-        <source type="image/avif" srcset="{{ p.photos.view | avif }}">
-        <source type="image/webp" srcset="{{ p.photos.view | webp }}">
-        <img src="{{ p.photos.view }}" alt="{{ t.photos.view }}" class="contact-hero-image" fetchpriority="high">
+        <source type="image/avif" srcset="{{ photos.view | avif }}">
+        <source type="image/webp" srcset="{{ photos.view | webp }}">
+        <img src="{{ photos.view }}" alt="{{ t.photos.view }}" class="contact-hero-image" fetchpriority="high">
       </picture>
       <div class="contact-hero-overlay">
         <h1>{{ t.contact.heading }}</h1>
@@ -103,7 +103,7 @@
   </main>
 
 {{ footer }}
-  <script src="js/pricing.js"></script>
-  <script src="js/contact.js"></script>
+  <script src="{{ root }}js/pricing.js"></script>
+  <script src="{{ root }}js/contact.js"></script>
 </body>
 </html>

@@ -1,5 +1,7 @@
 {
   "name": "Casa Esempio",
+  "url": "https://example.com",
+  "languages": ["en", "it"],
   "email": "hello@example.com",
   "address": "Via del Lago 1, 25010 Lake Garda, Italy",
   "formspreeId": "",

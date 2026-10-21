@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
 {{ head }}
 </head>
@@ -19,16 +19,16 @@
     <section class="info-split" data-reveal-group>
       <div class="info-split-card">
         <picture>
-          <source type="image/avif" srcset="{{ p.photos.exterior | avif }}">
-          <source type="image/webp" srcset="{{ p.photos.exterior | webp }}">
-          <img src="{{ p.photos.exterior }}" alt="{{ t.photos.exterior }}" loading="lazy" decoding="async">
+          <source type="image/avif" srcset="{{ photos.exterior | avif }}">
+          <source type="image/webp" srcset="{{ photos.exterior | webp }}">
+          <img src="{{ photos.exterior }}" alt="{{ t.photos.exterior }}" loading="lazy" decoding="async">
         </picture>
       </div>
       <div class="info-split-card">
         <picture>
-          <source type="image/avif" srcset="{{ p.photos.view | avif }}">
-          <source type="image/webp" srcset="{{ p.photos.view | webp }}">
-          <img src="{{ p.photos.view }}" alt="{{ t.photos.view }}" loading="lazy" decoding="async">
+          <source type="image/avif" srcset="{{ photos.view | avif }}">
+          <source type="image/webp" srcset="{{ photos.view | webp }}">
+          <img src="{{ photos.view }}" alt="{{ t.photos.view }}" loading="lazy" decoding="async">
         </picture>
       </div>
     </section>
@@ -78,6 +78,6 @@
   </main>
 
 {{ footer }}
-  <script src="js/gallery.js"></script>
+  <script src="{{ root }}js/gallery.js"></script>
 </body>
 </html>

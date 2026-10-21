@@ -1,7 +1,7 @@
   <header class="site-header">
     <nav class="header-content">
       <a href="index.html" class="logo">
-        <img src="{{ p.photos.logo }}" alt="{{ t.nav.logoAlt }}" width="50" height="50">
+        <img src="{{ photos.logo }}" alt="{{ t.nav.logoAlt }}" width="50" height="50">
       </a>
 
       <ul class="nav-list">
@@ -29,6 +29,7 @@
             <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
           </svg>
         </button>
+        {{ languageSwitch }}
       </div>
 
       <button class="mobile-toggle" aria-label="{{ t.nav.menu }}" aria-expanded="false">
@@ -65,6 +66,7 @@
           <div class="social-links">
 {{ social.mobile }}
           </div>
+          {{ languageSwitch }}
         </div>
       </div>
     </div>

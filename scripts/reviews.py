@@ -113,7 +113,7 @@ def quoted(title: str, body: str) -> str:
 
 def month_label(year_month: str, text: dict) -> str:
     year, month = year_month.split('-')
-    return f'{text["reviews"]["months"][int(month) - 1]} {year}'
+    return f'{text["ui"]["months"][int(month) - 1]} {year}'
 
 
 def language_name(code: str, text: dict) -> str:
@@ -157,8 +157,9 @@ def newest_first(reviews: list) -> list:
     return sorted(reviews, key=lambda r: r['date'], reverse=True)
 
 
-def average(scores: list, places: int) -> str:
-    return str(round_half_up(sum(scores) / len(scores), places))
+def average(scores: list, places: int, text: dict) -> str:
+    """Mean score, written the page language's way: 4.8 in English, 4,8 in Italian."""
+    return str(round_half_up(sum(scores) / len(scores), places)).replace('.', text['ui']['decimalSeparator'])
 
 
 def reviews_context(data: dict, text: dict, page_lang: str = 'en') -> dict:
@@ -178,7 +179,7 @@ def reviews_context(data: dict, text: dict, page_lang: str = 'en') -> dict:
             f'    <div class="platform-header">\n'
             f'      <h2>{html.escape(p["name"])}</h2>\n'
             f'      <span class="platform-score">'
-            f'<span>{average([r["score"] for r in mine], p["decimals"])}</span> / {p["scale"]}</span>\n'
+            f'<span>{average([r["score"] for r in mine], p["decimals"], text)}</span> / {p["scale"]}</span>\n'
             f'    </div>\n'
             f'    <div class="reviews-masonry">\n'
             + indent(cards, 6) + '\n'
@@ -194,7 +195,7 @@ def reviews_context(data: dict, text: dict, page_lang: str = 'en') -> dict:
     count = len(reviews)
     return {
         'count': count,
-        'rating': average(out_of_five, 1) if count else '',
+        'rating': average(out_of_five, 1, text) if count else '',
         'countText': text['reviews']['countText'].replace('{n}', str(count)),
         'featured': Markup(indent(featured_cards, 10)),
         'sections': Markup(indent('\n\n'.join(sections), 4)),

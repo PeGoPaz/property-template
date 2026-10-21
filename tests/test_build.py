@@ -126,10 +126,11 @@ class BuildTest(unittest.TestCase):
     def page(self, name):
         return (self.out / f'{name}.html').read_text()
 
-    def test_builds_every_page_with_nothing_left_unfilled(self):
+    def test_builds_every_page_in_every_language_with_nothing_left_unfilled(self):
         self.assertEqual(build.build(self.root, self.out),
-                         ['index.html', 'info.html', 'reviews.html', 'contact.html'])
-        for page in ('index', 'info', 'reviews', 'contact'):
+                         ['index.html', 'info.html', 'reviews.html', 'contact.html',
+                          'it/index.html', 'it/info.html', 'it/reviews.html', 'it/contact.html'])
+        for page in ('index', 'info', 'reviews', 'contact', 'it/index', 'it/info', 'it/reviews', 'it/contact'):
             html = self.page(page)
             self.assertNotIn('{{', html, page)
             self.assertNotIn('{name}', html, page)
@@ -186,6 +187,90 @@ class BuildTest(unittest.TestCase):
     def test_invalid_booking_rules_stop_the_build(self):
         self.edit_property(lambda p: p['booking'].update(minNights=0))
         with self.assertRaisesRegex(BuildError, 'booking:\n  minNights must be'):
+            build.build(self.root, self.out)
+
+    def edit_content(self, lang, change):
+        path = self.root / 'content' / f'{lang}.json'
+        text = json.loads(path.read_text())
+        change(text)
+        path.write_text(json.dumps(text))
+
+    def test_translated_pages_point_back_up_for_shared_files(self):
+        build.build(self.root, self.out)
+        html = self.page('it/info')
+        self.assertIn('<html lang="it">', html)
+        self.assertIn('<link rel="stylesheet" href="../css/styles.css">', html)
+        self.assertIn('<script src="../js/strings.it.js"></script>', html)
+        self.assertIn('<img src="../assets/exterior.jpg" alt="La casa vista dal giardino"', html)
+        self.assertIn('data-src="../assets/inside/kitchen.jpg" data-alt="Cucina"', html)
+        self.assertIn('<h1>La casa</h1>', html)
+        self.assertNotIn('src="assets/', html)
+
+    def test_language_links(self):
+        build.build(self.root, self.out)
+        english, italian = self.page('index'), self.page('it/index')
+        self.assertIn('<link rel="canonical" href="https://example.com/">', english)
+        self.assertIn('<link rel="canonical" href="https://example.com/it/">', italian)
+        for html in (english, italian):
+            self.assertIn('<link rel="alternate" hreflang="en" href="https://example.com/">', html)
+            self.assertIn('<link rel="alternate" hreflang="it" href="https://example.com/it/">', html)
+            self.assertIn('<link rel="alternate" hreflang="x-default" href="https://example.com/">', html)
+        self.assertIn('<a href="index.html" class="active" aria-current="page" lang="en" hreflang="en">EN</a>'
+                      '<a href="it/index.html" lang="it" hreflang="it">IT</a>', english)
+        self.assertIn('<a href="../index.html" lang="en" hreflang="en">EN</a>', italian)
+
+    def test_ui_strings_are_written_per_language(self):
+        build.build(self.root, self.out)
+        italian = (self.out / 'js' / 'strings.it.js').read_text()
+        self.assertIn('"locale": "it-IT"', italian)
+        self.assertIn('"mailSubject": "Richiesta di prenotazione - Casa Esempio"', italian)
+        self.assertIn('Check-in date must be in the future.', (self.out / 'js' / 'strings.en.js').read_text())
+
+    def test_numbers_follow_the_language(self):
+        build.build(self.root, self.out)
+        self.assertIn('<span id="home-rating">4.8</span>', self.page('index'))
+        self.assertIn('<span id="home-rating">4,8</span>', self.page('it/index'))
+
+    def test_one_language_means_no_switch_and_no_hreflang(self):
+        self.edit_property(lambda p: p.update(languages=['en']))
+        build.build(self.root, self.out)
+        html = self.page('index')
+        self.assertNotIn('lang-switch', html)
+        self.assertNotIn('hreflang', html)
+        self.assertIn('<link rel="canonical" href="https://example.com/">', html)
+        self.assertFalse((self.out / 'it').exists())
+
+    def test_default_language_is_the_first_listed(self):
+        self.edit_property(lambda p: p.update(languages=['it', 'en']))
+        build.build(self.root, self.out)
+        self.assertIn('<html lang="it">', self.page('index'))
+        self.assertIn('<html lang="en">', self.page('en/index'))
+
+    def test_incomplete_translation_stops_the_build(self):
+        def change(text):
+            del text['home']['heroHeading']
+            text['ui']['months'] = text['ui']['months'][:11]
+            text['nav']['extra'] = 'Extra'
+        self.edit_content('it', change)
+        with self.assertRaises(BuildError) as raised:
+            build.build(self.root, self.out)
+        # In the order the keys appear in the file.
+        self.assertEqual(str(raised.exception), 'translations do not match content/en.json:\n'
+                         '  content/it.json: unexpected nav.extra\n'
+                         '  content/it.json: missing home.heroHeading\n'
+                         '  content/it.json: ui.months should list 12 entries')
+
+    def test_language_without_a_content_file(self):
+        self.edit_property(lambda p: p.update(languages=['en', 'it', 'fr']))
+        with self.assertRaisesRegex(BuildError, 'content/fr.json is missing'):
+            build.build(self.root, self.out)
+
+    def test_bad_languages_and_url(self):
+        self.edit_property(lambda p: p.update(languages=['en', 'EN']))
+        with self.assertRaisesRegex(BuildError, 'languages must list two-letter codes'):
+            build.build(self.root, self.out)
+        self.edit_property(lambda p: p.update(languages=['en'], url='example.com'))
+        with self.assertRaisesRegex(BuildError, 'url must be the address'):
             build.build(self.root, self.out)
 
     def test_reviews_are_in_the_html(self):

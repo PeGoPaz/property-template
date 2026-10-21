@@ -1,0 +1,185 @@
+{
+  "language": {
+    "switchLabel": "Lingua"
+  },
+  "pages": {
+    "index": {
+      "title": "{name} - Casa vacanze sul Lago di Garda",
+      "description": "{name} - una casa vacanze sul Lago di Garda con tre camere da letto e vista sull'acqua. Verifica la disponibilità e prenota direttamente."
+    },
+    "info": {
+      "title": "La casa - {name}",
+      "description": "Dentro {name} - tre camere da letto, due terrazze, parcheggio privato e Wi-Fi veloce sul Lago di Garda."
+    },
+    "reviews": {
+      "title": "Recensioni - {name}",
+      "description": "Le recensioni degli ospiti di {name} sul Lago di Garda."
+    },
+    "contact": {
+      "title": "Contatti - {name}",
+      "description": "Contatta {name} per prenotare il tuo soggiorno sul Lago di Garda. Inviaci una richiesta diretta."
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "property": "La casa",
+    "reviews": "Recensioni",
+    "contact": "Contatti",
+    "logoAlt": "Logo di {name}",
+    "toggleTheme": "Cambia tema",
+    "menu": "Menu"
+  },
+  "footer": {
+    "blurb": "Una casa vacanze per famiglie sulle rive del Lago di Garda, a pochi passi dall'acqua.",
+    "navigate": "Naviga",
+    "connect": "Contatti",
+    "email": "Email",
+    "rights": "Tutti i diritti riservati."
+  },
+  "photos": {
+    "exterior": "La casa vista dal giardino",
+    "view": "Vista sul Lago di Garda"
+  },
+  "home": {
+    "heroHeading": "La tua casa vacanze sul Lago di Garda",
+    "heroText": "Una casa tranquilla vicino all'acqua, con spazio per tutta la famiglia",
+    "heroAlt": "{name} sopra il Lago di Garda",
+    "bookingHeading": "Verifica la disponibilità",
+    "availableDates": "Date disponibili",
+    "calendarHint": "Clicca una data di check-in, poi una di check-out (min. {minNights} notti).",
+    "adults": "Adulti",
+    "children": "Bambini",
+    "totalPrice": "Prezzo totale",
+    "selectDates": "Seleziona le date",
+    "aboutHeading": "Un posto per rallentare",
+    "aboutText": "{name} si trova in una strada tranquilla sopra il Lago di Garda, a dieci minuti a piedi dal traghetto e dal centro storico. Mattine in terrazza, pomeriggi sull'acqua e lunghe cene in giardino: qui va la storia della tua struttura.",
+    "reviewsHeading": "Amata dai nostri ospiti",
+    "readAllReviews": "Leggi tutte le recensioni"
+  },
+  "info": {
+    "heading": "La casa",
+    "intro": "Tre camere da letto, due terrazze e la vista sull'acqua da quasi ogni finestra. Tutto ciò che serve a una famiglia o a un gruppo di amici per una settimana tranquilla al lago.",
+    "galleryHeading": "Dentro la casa",
+    "previousImage": "Immagine precedente",
+    "nextImage": "Immagine successiva",
+    "amenitiesHeading": "Servizi e dotazioni"
+  },
+  "gallery": {
+    "living-room": "Soggiorno",
+    "kitchen": "Cucina",
+    "bedroom-1": "Camera principale",
+    "bedroom-2": "Seconda camera",
+    "bathroom": "Bagno",
+    "terrace": "Terrazza"
+  },
+  "amenities": {
+    "laundry": {
+      "title": "Lavanderia",
+      "text": "Lavatrice e stendibiancheria, così puoi viaggiare leggero.",
+      "alt": "Lavanderia"
+    },
+    "parking": {
+      "title": "Parcheggio",
+      "text": "Un posto auto privato, a pochi passi dalla porta.",
+      "alt": "Parcheggio privato"
+    },
+    "wifi": {
+      "title": "Wi-Fi",
+      "text": "Fibra veloce in tutta la casa, con una scrivania tranquilla per lavorare.",
+      "alt": "Postazione di lavoro con Wi-Fi"
+    }
+  },
+  "reviews": {
+    "heading": "Recensioni degli ospiti",
+    "intro": "Cosa dicono gli ospiti del loro soggiorno a {name}.",
+    "countText": "da {n} recensioni degli ospiti",
+    "showOriginal": "Mostra originale ({lang})",
+    "showTranslation": "Mostra traduzione ({lang})",
+    "languages": {
+      "en": "Inglese",
+      "it": "Italiano",
+      "de": "Tedesco",
+      "fr": "Francese",
+      "es": "Spagnolo",
+      "nl": "Olandese",
+      "pl": "Polacco",
+      "da": "Danese",
+      "uk": "Ucraino",
+      "ru": "Russo"
+    }
+  },
+  "contact": {
+    "heading": "Contattaci",
+    "introHeading": "Saremo felici di sentirti",
+    "introText": "Inviaci una richiesta diretta: ti risponderemo personalmente confermando la disponibilità e qualsiasi richiesta particolare. Nessun sistema automatico - solo comunicazione tra persone.",
+    "address": "Indirizzo",
+    "email": "Email",
+    "formHeading": "Invia una richiesta",
+    "bookingRequest": "La tua richiesta di prenotazione",
+    "name": "Il tuo nome",
+    "yourEmail": "Il tuo indirizzo email",
+    "message": "Il tuo messaggio",
+    "honeypot": "Azienda (lascia vuoto questo campo)",
+    "subject": "Nuova richiesta di prenotazione - {name}",
+    "send": "Invia richiesta"
+  },
+  "ui": {
+    "locale": "it-IT",
+    "months": ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"],
+    "days": ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
+    "night": "notte",
+    "nights": "notti",
+    "guest": "ospite",
+    "guests": "ospiti",
+    "legendAvailable": "Disponibile",
+    "legendSelected": "Selezionato",
+    "legendInRange": "Nel periodo",
+    "legendBooked": "Occupato",
+    "legendClosed": "Stagione chiusa",
+    "prevMonth": "Mese precedente",
+    "nextMonth": "Mese successivo",
+    "loading": "Caricamento disponibilità...",
+    "calLoadFailed": "⚠ Impossibile caricare la disponibilità in tempo reale. Alcune date mostrate come libere potrebbero essere già prenotate.",
+    "alreadyBooked": "Già prenotato",
+    "checkoutOnly": "Disponibile solo come data di check-out",
+    "closedTooltip": "Chiuso in questa data",
+    "btnSelectDates": "Seleziona le date",
+    "btnInvalidDates": "Date non valide",
+    "btnTooShort": "Soggiorno troppo breve",
+    "btnClosedSeason": "Stagione chiusa",
+    "btnInvalid": "Non valido",
+    "btnTooManyGuests": "Troppi ospiti",
+    "btnUnavailable": "Non disponibile",
+    "btnRequestStay": "Richiedi il soggiorno",
+    "msgFutureDate": "La data di check-in deve essere futura.",
+    "msgOrder": "Il check-out deve essere successivo al check-in.",
+    "msgMinStay": "Il soggiorno minimo è di {min} notti. La tua selezione: {n} {nightsWord}.",
+    "msgOpenSeason": "La struttura è chiusa nella data di check-in.",
+    "msgCrossSeason": "Il tuo soggiorno include notti in cui la struttura è chiusa. Modifica le date.",
+    "msgClosedNights": "Il tuo soggiorno include notti nella stagione chiusa.",
+    "msgMinGuest": "Inserisci almeno 1 ospite.",
+    "msgMaxGuests": "Massimo {max} ospiti in totale (adulti + bambini).",
+    "msgAdultRequired": "È richiesto almeno 1 adulto.",
+    "msgConflict": "Queste date sono in conflitto con una prenotazione esistente ({date}). Scegli altre date.",
+    "msgStillLoading": "⚠ I dati di disponibilità sono ancora in caricamento. Le date selezionate potrebbero essere già prenotate.",
+    "msgLoadFailed": "⚠ Impossibile caricare la disponibilità in tempo reale. Le date selezionate potrebbero essere già prenotate — confermeremo via email.",
+    "breakdown": "{nights} notti · {from} → {to}",
+    "hintCheckin": "Clicca una data di check-in.",
+    "hintCheckout": "Check-in: {date}. Ora clicca il check-out.",
+    "hintRange": "{from} → {to} ({nights} notti)",
+    "errName": "Inserisci il tuo nome.",
+    "errEmail": "Inserisci un indirizzo email valido.",
+    "errMessage": "Includi un messaggio nella tua richiesta.",
+    "errTooLong": "Il messaggio è troppo lungo. Accorcialo.",
+    "sent": "Grazie! La tua richiesta è stata inviata.",
+    "sentFull": "Grazie! La tua richiesta è stata inviata. Ti risponderemo via email a breve.",
+    "sending": "Invio in corso...",
+    "sendInquiry": "Invia richiesta",
+    "openingMail": "Apertura del client di posta...",
+    "genericError": "Qualcosa è andato storto. Riprova.",
+    "networkError": "Errore di rete. Controlla la connessione e riprova.",
+    "mailSubject": "Richiesta di prenotazione - {name}",
+    "msgTemplate": "Buongiorno,\n\nvorrei richiedere una prenotazione presso {name}:\n\n  Check-in:  {checkin}\n  Check-out: {checkout}\n  Ospiti:    {guests}\n  Durata:    {nights} {nightsWord}\n\n  Prezzo totale stimato: {price}\n\nVi prego di confermare la disponibilità e indicarmi i prossimi passi.\n\nGrazie,",
+    "decimalSeparator": ","
+  }
+}

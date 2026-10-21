@@ -13,6 +13,7 @@ standard-library Python script.
 - Availability from a static `availability.json`
 - Gallery, amenities, guest reviews from several platforms, and a contact form
   that arrives pre-filled from the booking flow
+- Any number of languages, with a language switch and hreflang links
 - Light and dark theme
 - Photos served as AVIF and WebP with a JPEG fallback
 
@@ -20,9 +21,9 @@ standard-library Python script.
 
 | File | What goes in it |
 |---|---|
-| `property.json` | Name, email, address, Formspree form ID, prices and stay rules, social links, photos, gallery and amenities |
+| `property.json` | Name, address the site is served at, languages, email, postal address, Formspree form ID, prices and stay rules, social links, photos, gallery and amenities |
 | `reviews.json` | Guest reviews and the platforms they came from |
-| `content/en.json` | Every piece of text on the site. `{name}` becomes the property's name |
+| `content/<lang>.json` | Every piece of text on the site, one file per language. `{name}` becomes the property's name |
 | `templates/` | Page layouts. Files starting with `_` are shared between pages |
 
 Leave `formspreeId` empty and the contact form opens the guest's email client
@@ -44,6 +45,26 @@ guests allowed and the nightly rate for each season:
 Dates are `MM-DD`, both ends included, and repeat every year. A season whose
 start is later than its end runs over New Year. Any night outside every season
 is closed and shown as such in the calendar. Overlapping seasons stop the build.
+
+### Languages
+
+`languages` in `property.json` lists the languages the site is built in. The
+first is the default and lives at the root; each other one gets the same pages
+under `/<lang>/`. The example ships English and Italian.
+
+To add one, copy `content/en.json` to `content/<lang>.json`, translate every
+value (including the `ui` block the booking calendar and contact form use,
+and its `locale`), and add the code to `languages`. A translation with a
+missing or extra key stops the build and lists them:
+
+```
+build failed: translations do not match content/en.json:
+  content/de.json: missing home.heroHeading
+  content/de.json: ui.months should list 12 entries
+```
+
+Reviews are shown in the guest's own language unless they carry a translation
+for the page's language, in which case the original is one click away.
 
 ### Reviews
 
