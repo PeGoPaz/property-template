@@ -84,7 +84,9 @@ arrivals, to leave time for cleaning, unless `booking.sameDayTurnover` is
 missing one platform's bookings would offer those dates again.
 
 Treat the feed URLs like passwords: anyone holding one can read your bookings.
-Keep them out of the repository; the script never prints them.
+Keep them out of the repository; the script never prints them. Once the site
+is deployed (below), the URLs live in a repository secret and the calendar
+refreshes itself every 6 hours.
 
 ### Reviews
 
@@ -111,6 +113,25 @@ a caption stops the build with a message saying which.
 python3 -m unittest discover -s tests
 node --test tests/*.test.js
 ```
+
+## Deploy
+
+The CI workflow tests and builds every push. Once deploying is switched on, runs
+on `main` also deploy `_site/` to GitHub Pages, and every 6 hours it fetches the
+iCal feeds and rebuilds, so new bookings reach the calendar without anyone
+committing anything. A failing test, translation or feed stops the run and
+leaves the live site as it was.
+
+1. **Settings → Pages → Source:** GitHub Actions.
+2. **Settings → Secrets and variables → Actions:**
+   - variable `PAGES_ENABLED` set to `true`; until then CI only tests and builds
+   - secret `ICAL_URLS`, one feed URL per line. Without it the calendar shows
+     the sample `availability.json`, and each run says so in a warning.
+3. Set `url` in `property.json` to the address the site is served at, for
+   example `https://<user>.github.io/<repository>` or your own domain.
+
+GitHub pauses scheduled workflows after 60 days without activity in the
+repository; re-enable it from the Actions tab if the calendar stops updating.
 
 ## Photos
 

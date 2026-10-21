@@ -1,16 +1,33 @@
 name: CI
 
+# Tests and builds every push and pull request. Once the repository variable
+# PAGES_ENABLED is "true", runs on main also deploy the site to GitHub Pages,
+# and every 6 hours rebuild it so new bookings from the iCal feeds reach the
+# calendar without a commit.
+
 on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+# Never cancel a deploy halfway; a newer run waits for the current one.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  test:
+  build:
+    # The scheduled rebuild only matters for a deployed site.
+    if: github.event_name != 'schedule' || vars.PAGES_ENABLED == 'true'
     runs-on: ubuntu-latest
+    env:
+      DEPLOY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.PAGES_ENABLED == 'true' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -18,14 +35,44 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Test the build script
+      - name: Test the build scripts
         run: python -m unittest discover -s tests -v
 
       - name: Test the browser scripts
         run: node --test tests/*.test.js
 
+      - name: Sync availability from the iCal feeds
+        if: env.DEPLOY == 'true'
+        env:
+          ICAL_URLS: ${{ secrets.ICAL_URLS }}
+        run: |
+          if [ -z "$ICAL_URLS" ]; then
+            echo "::warning::The ICAL_URLS secret is not set, so the calendar shows the sample availability.json from the repository."
+          else
+            python scripts/sync_availability.py
+          fi
+
       - name: Build the site
         run: python scripts/build.py
 
       - name: Check the browser scripts parse
-        run: for f in js/*.js _site/js/property.js; do node --check "$f"; done
+        run: for f in _site/js/*.js; do node --check "$f"; done
+
+      - uses: actions/upload-pages-artifact@v3
+        if: env.DEPLOY == 'true'
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.PAGES_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
