@@ -1655,6 +1655,11 @@ main {
   transition: background var(--transition), border-color var(--transition), color var(--transition);
 }
 
+/* Rendered hidden; js/reviews.js shows it, since it does nothing without JS. */
+.review-toggle[hidden] {
+  display: none;
+}
+
 .review-toggle:hover {
   background: rgba(30, 58, 95, 0.06);
   border-color: var(--color-accent);

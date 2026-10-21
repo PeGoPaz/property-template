@@ -21,6 +21,7 @@ standard-library Python script.
 | File | What goes in it |
 |---|---|
 | `property.json` | Name, email, address, Formspree form ID, prices and stay rules, social links, photos, gallery and amenities |
+| `reviews.json` | Guest reviews and the platforms they came from |
 | `content/en.json` | Every piece of text on the site. `{name}` becomes the property's name |
 | `templates/` | Page layouts. Files starting with `_` are shared between pages |
 
@@ -43,6 +44,17 @@ guests allowed and the nightly rate for each season:
 Dates are `MM-DD`, both ends included, and repeat every year. A season whose
 start is later than its end runs over New Year. Any night outside every season
 is closed and shown as such in the calendar. Overlapping seasons stop the build.
+
+### Reviews
+
+Each review names its platform, the guest's score on that platform's scale
+(10 on Booking.com, 5 on Airbnb and Google), the month, and the language the
+guest wrote in. Add `translations` to show it in the page's language with a
+"Show original" button, and `"featured": true` to put it on the home page.
+
+Reviews are rendered into the HTML at build time, so search engines and
+visitors without JavaScript see them too. Averages per platform and the
+overall rating out of 5 are worked out from the reviews themselves.
 
 ## Build and preview
 

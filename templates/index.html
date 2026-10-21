@@ -82,22 +82,7 @@
       </div>
     </section>
 
-    <!-- Guest reviews (cards injected by reviews.js) -->
-    <section class="home-reviews" data-reveal>
-      <div class="container">
-        <h2>{{ t.home.reviewsHeading }}</h2>
-        <p class="home-reviews-score">
-          <span id="home-rating">4.8</span> / 5
-        </p>
-        <p class="home-reviews-count" id="home-review-count">from 6 guest reviews</p>
-
-        <div class="reviews-masonry" id="reviews-featured"></div>
-
-        <p class="home-reviews-more">
-          <a href="reviews.html" class="btn-outline">{{ t.home.readAllReviews }}</a>
-        </p>
-      </div>
-    </section>
+{{ home_reviews }}
   </main>
 
 {{ footer }}

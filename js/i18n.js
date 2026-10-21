@@ -4,7 +4,7 @@
  * Loaded BEFORE booking.js / calendar.js / contact.js, which read window.SITE_I18N.
  * {property} in any string becomes the property's name from js/property.js.
  *
- * Review texts carry their own translations in js/reviews.js.
+ * Review texts and their translations live in reviews.json.
  */
 
 (function () {
@@ -74,12 +74,6 @@
       networkError: 'Network error. Please check your connection and try again.',
       mailSubject: 'Booking Inquiry - {property}',
       msgTemplate: 'Hello,\n\nI would like to request a booking at {property}:\n\n  Check-in:  {checkin}\n  Check-out: {checkout}\n  Guests:    {guests}\n  Duration:  {nights} {nightsWord}\n\n  Estimated Total Price: {price}\n\nPlease confirm availability and let me know the next steps.\n\nThank you,',
-
-      // Reviews page
-      reviewsFrom: 'from {n} guest reviews',
-      showOriginal: 'Show original ({lang})',
-      showTranslation: 'Show translation ({lang})',
-      langNames: { en: 'English', it: 'Italian', de: 'German', fr: 'French', pl: 'Polish', da: 'Danish', uk: 'Ukrainian', ru: 'Russian' },
     },
 
   };
@@ -106,7 +100,6 @@
     locale: dict.locale,
     months: dict.months,
     days: dict.days,
-    langNames: dict.langNames || DICTS.en.langNames,
     t: t,
     /** Pluralized word for nights/guests */
     plural: function (n, singularKey, pluralKey) {

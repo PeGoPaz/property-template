@@ -3,6 +3,7 @@
 Builds the site into _site/ from three sources:
 
   property.json     facts about the property: name, contact details, links, photos
+  reviews.json      guest reviews, rendered into the pages (see scripts/reviews.py)
   content/en.json   every piece of visible text
   templates/        page layouts; files starting with _ are partials
 
@@ -32,12 +33,15 @@ from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+from markup import BuildError, Markup, attr, indent
+from reviews import check_reviews, reviews_context
+
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES = ROOT / 'templates'
 OUT = ROOT / '_site'
 
 PAGES = ['index', 'info', 'reviews', 'contact']
-PARTIALS = ['head', 'header', 'footer']
+PARTIALS = ['head', 'header', 'footer', 'home_reviews']
 STATIC = ['css', 'js', 'assets', 'availability.json', '_headers']
 
 REQUIRED = ['name', 'email', 'address', 'booking', 'photos', 'gallery', 'amenities']
@@ -49,14 +53,6 @@ FILTERS = {
     'avif': lambda v: re.sub(r'\.jpg$', '.avif', v),
     'webp': lambda v: re.sub(r'\.jpg$', '.webp', v),
 }
-
-
-class BuildError(Exception):
-    pass
-
-
-class Markup(str):
-    """HTML that is already safe, inserted by render() without escaping."""
 
 
 # ────────────────────────────────────────────────
@@ -109,10 +105,6 @@ def fill_vars(value, variables: dict):
 # Fragments
 # ────────────────────────────────────────────────
 
-def attr(value: str) -> str:
-    return html.escape(value, quote=True)
-
-
 def picture(src: str, alt: str, extra: str = '') -> str:
     extra = f' {extra}' if extra else ''
     return (f'<picture>\n'
@@ -120,11 +112,6 @@ def picture(src: str, alt: str, extra: str = '') -> str:
             f'  <source type="image/webp" srcset="{attr(FILTERS["webp"](src))}">\n'
             f'  <img src="{attr(src)}" alt="{attr(alt)}"{extra}>\n'
             f'</picture>')
-
-
-def indent(text: str, spaces: int) -> str:
-    pad = ' ' * spaces
-    return '\n'.join(pad + line if line else line for line in text.split('\n'))
 
 
 SOCIAL_ICONS = {
@@ -278,7 +265,7 @@ def check_property(prop: dict, root: Path) -> None:
         raise BuildError('property.json points at photos that do not exist: ' + ', '.join(absent))
 
 
-def context_for(prop: dict, text: dict) -> dict:
+def context_for(prop: dict, reviews: dict, text: dict) -> dict:
     form_id = prop.get('formspreeId', '')
     return {
         'p': prop,
@@ -294,6 +281,7 @@ def context_for(prop: dict, text: dict) -> dict:
         },
         'gallery': gallery(prop, text),
         'amenities': amenities(prop, text),
+        'reviews': reviews_context(reviews, text),
     }
 
 
@@ -313,7 +301,12 @@ def build(root: Path = ROOT, out: Path = OUT) -> list:
         'maxGuests': prop['booking']['maxGuests'],
     })
 
-    context = context_for(prop, text)
+    reviews = load_json(root / 'reviews.json')
+    problems = check_reviews(reviews)
+    if problems:
+        raise BuildError('reviews.json:\n  ' + '\n  '.join(problems))
+
+    context = context_for(prop, reviews, text)
 
     templates = root / 'templates'
     partials = {name: (templates / f'_{name}.html').read_text(encoding='utf-8').rstrip('\n')
@@ -336,6 +329,8 @@ def build(root: Path = ROOT, out: Path = OUT) -> list:
         page_context = dict(context, page=text['pages'][page])
         for name, source in partials.items():
             page_context[name] = Markup(render(source, page_context, f'templates/_{name}.html'))
+        if not context['reviews']['count']:
+            page_context['home_reviews'] = Markup('')  # no "Loved by our guests" with nothing to show
         source = (templates / f'{page}.html').read_text(encoding='utf-8')
         (out / f'{page}.html').write_text(render(source, page_context, f'templates/{page}.html'),
                                           encoding='utf-8')

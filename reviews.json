@@ -1,0 +1,69 @@
+{
+  "platforms": [
+    { "id": "booking", "name": "Booking.com", "scale": 10, "decimals": 1 },
+    { "id": "airbnb", "name": "Airbnb", "scale": 5, "decimals": 2 },
+    { "id": "google", "name": "Google Maps", "scale": 5, "decimals": 1 }
+  ],
+  "reviews": [
+    {
+      "platform": "booking",
+      "reviewer": "Marta, PL",
+      "date": "2026-08",
+      "score": 10,
+      "featured": true,
+      "lang": "en",
+      "title": "Exactly as pictured.",
+      "text": "Bright rooms, a well-equipped kitchen and a terrace we never wanted to leave. The host answered every message within the hour."
+    },
+    {
+      "platform": "booking",
+      "reviewer": "Jonas, DE",
+      "date": "2026-07",
+      "score": 9,
+      "lang": "de",
+      "title": "Ideal, um den See zu erkunden.",
+      "text": "Ruhige Straße, einfaches Parken und nur ein kurzer Spaziergang zur Fähre. Die Betten könnten etwas fester sein.",
+      "translations": {
+        "en": {
+          "title": "A great base for exploring the lake.",
+          "text": "Quiet street, easy parking and only a short walk to the ferry. The beds could be a little firmer."
+        }
+      }
+    },
+    {
+      "platform": "booking",
+      "reviewer": "Claire, FR",
+      "date": "2026-06",
+      "score": 10,
+      "featured": true,
+      "lang": "en",
+      "title": "A wonderful family holiday.",
+      "text": "Plenty of room for two families, and the children spent every afternoon in the garden."
+    },
+    {
+      "platform": "airbnb",
+      "reviewer": "Daniel",
+      "date": "2026-09",
+      "score": 5,
+      "featured": true,
+      "lang": "en",
+      "text": "Spotless, comfortable and in a lovely spot. We would stay again."
+    },
+    {
+      "platform": "airbnb",
+      "reviewer": "Sofia",
+      "date": "2026-05",
+      "score": 4,
+      "lang": "en",
+      "text": "Lovely home with a great view. The road up is steep, so a small car helps."
+    },
+    {
+      "platform": "google",
+      "reviewer": "Peter K.",
+      "date": "2026-08",
+      "score": 5,
+      "lang": "en",
+      "text": "Beautiful house and a very kind host."
+    }
+  ]
+}

@@ -88,7 +88,23 @@
   },
   "reviews": {
     "heading": "Guest Reviews",
-    "intro": "What our guests say about their stay at {name}."
+    "intro": "What our guests say about their stay at {name}.",
+    "countText": "from {n} guest reviews",
+    "showOriginal": "Show original ({lang})",
+    "showTranslation": "Show translation ({lang})",
+    "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    "languages": {
+      "en": "English",
+      "it": "Italian",
+      "de": "German",
+      "fr": "French",
+      "es": "Spanish",
+      "nl": "Dutch",
+      "pl": "Polish",
+      "da": "Danish",
+      "uk": "Ukrainian",
+      "ru": "Russian"
+    }
   },
   "contact": {
     "heading": "Get in Touch",

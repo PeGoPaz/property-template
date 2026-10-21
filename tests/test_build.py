@@ -188,6 +188,29 @@ class BuildTest(unittest.TestCase):
         with self.assertRaisesRegex(BuildError, 'booking:\n  minNights must be'):
             build.build(self.root, self.out)
 
+    def test_reviews_are_in_the_html(self):
+        build.build(self.root, self.out)
+        home = self.page('index')
+        self.assertIn('<span id="home-rating">4.8</span> / 5', home)
+        self.assertEqual(home.count('<article class="review-card">'), 3)
+        self.assertEqual(self.page('reviews').count('<article class="review-card">'), 6)
+
+    def test_home_page_drops_the_reviews_section_without_reviews(self):
+        path = self.root / 'reviews.json'
+        data = json.loads(path.read_text())
+        data['reviews'] = []
+        path.write_text(json.dumps(data))
+        build.build(self.root, self.out)
+        self.assertNotIn('home-reviews', self.page('index'))
+
+    def test_invalid_reviews_stop_the_build(self):
+        path = self.root / 'reviews.json'
+        data = json.loads(path.read_text())
+        data['reviews'][0]['score'] = 12
+        path.write_text(json.dumps(data))
+        with self.assertRaisesRegex(BuildError, r'reviews.json:\n  review 1 \(Marta, PL\): score must be'):
+            build.build(self.root, self.out)
+
     def test_missing_required_field(self):
         self.edit_property(lambda p: (p.pop('email'), p['photos'].pop('hero')))
         with self.assertRaisesRegex(BuildError, 'missing email, photos.hero'):
