@@ -1,0 +1,38 @@
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>{{ p.name }}</h3>
+        <p>
+          {{ p.address }}<br>
+          {{ t.footer.blurb }}
+        </p>
+      </div>
+
+      <div class="footer-section">
+        <h3>{{ t.footer.navigate }}</h3>
+        <ul class="footer-nav">
+          <li><a href="index.html">{{ t.nav.home }}</a></li>
+          <li><a href="info.html">{{ t.nav.property }}</a></li>
+          <li><a href="reviews.html">{{ t.nav.reviews }}</a></li>
+          <li><a href="contact.html">{{ t.nav.contact }}</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h3>{{ t.footer.connect }}</h3>
+        <div class="footer-social">
+{{ social.footer }}
+          <a href="mailto:{{ p.email }}" aria-label="{{ t.footer.email }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          </a>
+        </div>
+        <p class="footer-copyright">© {{ year }} {{ p.name }}. {{ t.footer.rights }}</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/property.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/reveal.js"></script>

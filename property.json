@@ -1,0 +1,31 @@
+{
+  "name": "Casa Esempio",
+  "email": "hello@example.com",
+  "address": "Via del Lago 1, 25010 Lake Garda, Italy",
+  "formspreeId": "",
+  "social": {
+    "facebook": "https://www.facebook.com/",
+    "instagram": "https://www.instagram.com/"
+  },
+  "photos": {
+    "logo": "assets/logo.jpg",
+    "favicon": "assets/favicon-32.png",
+    "appleTouchIcon": "assets/apple-touch-icon.png",
+    "hero": "assets/hero.jpg",
+    "exterior": "assets/exterior.jpg",
+    "view": "assets/view.jpg"
+  },
+  "gallery": [
+    { "id": "living-room", "src": "assets/inside/living-room.jpg" },
+    { "id": "kitchen", "src": "assets/inside/kitchen.jpg" },
+    { "id": "bedroom-1", "src": "assets/inside/bedroom-1.jpg" },
+    { "id": "bedroom-2", "src": "assets/inside/bedroom-2.jpg" },
+    { "id": "bathroom", "src": "assets/inside/bathroom.jpg" },
+    { "id": "terrace", "src": "assets/inside/terrace.jpg" }
+  ],
+  "amenities": [
+    { "id": "laundry", "image": "assets/facilities/laundry.jpg" },
+    { "id": "parking", "image": "assets/facilities/parking.jpg" },
+    { "id": "wifi", "image": "assets/facilities/wifi.jpg" }
+  ]
+}

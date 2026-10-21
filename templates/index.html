@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{{ head }}
+</head>
+<body>
+{{ header }}
+
+  <main>
+    <section class="hero">
+      <picture>
+        <source type="image/avif" srcset="{{ p.photos.hero | avif }}">
+        <source type="image/webp" srcset="{{ p.photos.hero | webp }}">
+        <img src="{{ p.photos.hero }}" alt="{{ t.home.heroAlt }}" class="hero-image" fetchpriority="high">
+      </picture>
+      <div class="hero-overlay">
+        <h1>{{ t.home.heroHeading }}</h1>
+        <p>{{ t.home.heroText }}</p>
+      </div>
+    </section>
+
+    <section class="booking-section">
+      <div class="booking-widget">
+        <h2>{{ t.home.bookingHeading }}</h2>
+
+        <div class="booking-form">
+          <div class="calendar-wrap">
+            <label>{{ t.home.availableDates }}</label>
+            <div class="calendar-hint" id="calendar-hint">{{ t.home.calendarHint }}</div>
+            <div id="availability-calendar"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="adults">{{ t.home.adults }}</label>
+            <input type="number" id="adults" min="1" max="8" value="2" class="guest-input">
+          </div>
+
+          <div class="form-group">
+            <label for="children">{{ t.home.children }}</label>
+            <input type="number" id="children" min="0" max="7" value="0" class="guest-input">
+          </div>
+
+          <div class="price-display" id="price-display" style="display: none;">
+            <div class="price-label">{{ t.home.totalPrice }}</div>
+            <div class="price-amount" id="price-amount">€0</div>
+            <div class="price-breakdown" id="price-breakdown"></div>
+          </div>
+
+          <button id="check-availability-btn" class="btn-primary" disabled>
+            {{ t.home.selectDates }}
+          </button>
+        </div>
+
+        <div class="booking-message" id="booking-message"></div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about-section" data-reveal>
+      <div class="container">
+        <h2>{{ t.home.aboutHeading }}</h2>
+        <p>
+          {{ t.home.aboutText }}
+        </p>
+
+        <div class="image-grid" data-reveal-group>
+          <div class="image-card">
+            <picture>
+              <source type="image/avif" srcset="{{ p.photos.exterior | avif }}">
+              <source type="image/webp" srcset="{{ p.photos.exterior | webp }}">
+              <img src="{{ p.photos.exterior }}" alt="{{ t.photos.exterior }}" loading="lazy" decoding="async">
+            </picture>
+          </div>
+          <div class="image-card">
+            <picture>
+              <source type="image/avif" srcset="{{ p.photos.view | avif }}">
+              <source type="image/webp" srcset="{{ p.photos.view | webp }}">
+              <img src="{{ p.photos.view }}" alt="{{ t.photos.view }}" loading="lazy" decoding="async">
+            </picture>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Guest reviews (cards injected by reviews.js) -->
+    <section class="home-reviews" data-reveal>
+      <div class="container">
+        <h2>{{ t.home.reviewsHeading }}</h2>
+        <p class="home-reviews-score">
+          <span id="home-rating">4.8</span> / 5
+        </p>
+        <p class="home-reviews-count" id="home-review-count">from 6 guest reviews</p>
+
+        <div class="reviews-masonry" id="reviews-featured"></div>
+
+        <p class="home-reviews-more">
+          <a href="reviews.html" class="btn-outline">{{ t.home.readAllReviews }}</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+{{ footer }}
+  <script src="js/booking.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/reviews.js"></script>
+</body>
+</html>

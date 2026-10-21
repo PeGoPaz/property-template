@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{{ head }}
+</head>
+<body>
+{{ header }}
+
+  <main>
+    <!-- Intro -->
+    <section class="reviews-intro">
+      <div class="container text-center">
+        <h1>{{ t.reviews.heading }}</h1>
+        <p>{{ t.reviews.intro }}</p>
+      </div>
+    </section>
+
+    <!-- Booking.com Reviews -->
+    <section class="reviews-section" data-reveal>
+      <div class="container">
+        <div class="platform-header">
+          <h2>Booking.com</h2>
+          <span class="platform-score"><span id="booking-score">9.7</span> / 10</span>
+        </div>
+        <div class="reviews-masonry" id="reviews-booking">
+          <!-- Injected by reviews.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Airbnb Reviews -->
+    <section class="reviews-section" data-reveal>
+      <div class="container">
+        <div class="platform-header">
+          <h2>Airbnb</h2>
+          <span class="platform-score"><span id="airbnb-score">4.50</span> / 5</span>
+        </div>
+        <div class="reviews-masonry" id="reviews-airbnb">
+          <!-- Injected by reviews.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Google Maps Reviews -->
+    <section class="reviews-section" data-reveal>
+      <div class="container">
+        <div class="platform-header">
+          <h2>Google Maps</h2>
+          <span class="platform-score"><span id="google-score">5.0</span> / 5</span>
+        </div>
+        <div class="reviews-masonry" id="reviews-google">
+          <!-- Injected by reviews.js -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+{{ footer }}
+  <script src="js/reviews.js"></script>
+</body>
+</html>

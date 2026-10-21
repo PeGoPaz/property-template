@@ -1,0 +1,108 @@
+{
+  "pages": {
+    "index": {
+      "title": "{name} - Holiday Home on Lake Garda",
+      "description": "{name} - a holiday home on Lake Garda with three bedrooms and a view of the water. Check availability and book direct."
+    },
+    "info": {
+      "title": "The House - {name}",
+      "description": "Inside {name} - three bedrooms, two terraces, private parking and fast Wi-Fi on Lake Garda."
+    },
+    "reviews": {
+      "title": "Reviews - {name}",
+      "description": "Guest reviews for {name} on Lake Garda."
+    },
+    "contact": {
+      "title": "Contact - {name}",
+      "description": "Contact {name} to book your stay on Lake Garda. Send us a direct inquiry."
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "property": "House",
+    "reviews": "Reviews",
+    "contact": "Contact",
+    "logoAlt": "{name} logo",
+    "toggleTheme": "Toggle theme",
+    "menu": "Menu"
+  },
+  "footer": {
+    "blurb": "A family holiday home on the shores of Lake Garda, a short walk from the water.",
+    "navigate": "Navigate",
+    "connect": "Connect",
+    "email": "Email",
+    "rights": "All rights reserved."
+  },
+  "photos": {
+    "exterior": "The house from the garden",
+    "view": "View over Lake Garda"
+  },
+  "home": {
+    "heroHeading": "Your Holiday Home on Lake Garda",
+    "heroText": "A quiet house by the water, with room for the whole family",
+    "heroAlt": "{name} above Lake Garda",
+    "bookingHeading": "Check Availability",
+    "availableDates": "Available Dates",
+    "calendarHint": "Click a check-in date, then a check-out date (min. 3 nights).",
+    "adults": "Adults",
+    "children": "Children",
+    "totalPrice": "Total Price",
+    "selectDates": "Select Dates",
+    "aboutHeading": "A Place to Slow Down",
+    "aboutText": "{name} sits on a quiet street above Lake Garda, ten minutes on foot from the ferry and the old town. Mornings on the terrace, afternoons on the water and long dinners in the garden: this is the place to tell your own property's story.",
+    "reviewsHeading": "Loved by Our Guests",
+    "readAllReviews": "Read all reviews"
+  },
+  "info": {
+    "heading": "The House",
+    "intro": "Three bedrooms, two terraces and a view of the water from almost every window. Everything a family or a group of friends needs for a slow week by the lake.",
+    "galleryHeading": "Inside the House",
+    "previousImage": "Previous image",
+    "nextImage": "Next image",
+    "amenitiesHeading": "Amenities & Facilities"
+  },
+  "gallery": {
+    "living-room": "Living room",
+    "kitchen": "Kitchen",
+    "bedroom-1": "Main bedroom",
+    "bedroom-2": "Second bedroom",
+    "bathroom": "Bathroom",
+    "terrace": "Terrace"
+  },
+  "amenities": {
+    "laundry": {
+      "title": "Laundry",
+      "text": "A washing machine and drying rack, so you can pack light.",
+      "alt": "Laundry facilities"
+    },
+    "parking": {
+      "title": "Parking",
+      "text": "A private space for one car, a few steps from the door.",
+      "alt": "Private parking"
+    },
+    "wifi": {
+      "title": "Wi-Fi",
+      "text": "Fast fibre broadband throughout the house, with a quiet desk for work.",
+      "alt": "Workspace with Wi-Fi"
+    }
+  },
+  "reviews": {
+    "heading": "Guest Reviews",
+    "intro": "What our guests say about their stay at {name}."
+  },
+  "contact": {
+    "heading": "Get in Touch",
+    "introHeading": "We'd Love to Hear From You",
+    "introText": "Send us a direct inquiry and we'll respond personally with availability confirmation and any special requests you may have. No automated systems - just human-to-human communication.",
+    "address": "Address",
+    "email": "Email",
+    "formHeading": "Send Inquiry",
+    "bookingRequest": "Your Booking Request",
+    "name": "Your Name",
+    "yourEmail": "Your Email Address",
+    "message": "Your Message",
+    "honeypot": "Company (leave this field empty)",
+    "subject": "New Booking Inquiry - {name}",
+    "send": "Send Inquiry"
+  }
+}

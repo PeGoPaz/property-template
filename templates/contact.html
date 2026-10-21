@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{{ head }}
+</head>
+<body>
+{{ header }}
+
+  <main>
+    <section class="contact-hero">
+      <picture>
+        <source type="image/avif" srcset="{{ p.photos.view | avif }}">
+        <source type="image/webp" srcset="{{ p.photos.view | webp }}">
+        <img src="{{ p.photos.view }}" alt="{{ t.photos.view }}" class="contact-hero-image" fetchpriority="high">
+      </picture>
+      <div class="contact-hero-overlay">
+        <h1>{{ t.contact.heading }}</h1>
+      </div>
+    </section>
+
+    <section class="contact-section">
+      <div class="container contact-grid">
+        <!-- Contact Info -->
+        <div class="contact-info">
+          <h2>{{ t.contact.introHeading }}</h2>
+          <p>
+            {{ t.contact.introText }}
+          </p>
+
+          <div class="contact-details">
+            <div class="contact-item">
+              <svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <div>
+                <h3>{{ t.contact.address }}</h3>
+                <p>{{ p.address }}</p>
+              </div>
+            </div>
+            <div class="contact-item">
+              <svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              <div>
+                <h3>{{ t.contact.email }}</h3>
+                <p><a href="mailto:{{ p.email }}">{{ p.email }}</a></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact Form -->
+        <div class="contact-form-wrapper">
+          <form id="contact-form" action="{{ formAction }}" method="POST">
+            <h2>{{ t.contact.formHeading }}</h2>
+            
+            <!-- Booking details (read-only display) -->
+            <div id="booking-details-summary" style="display: none;">
+              <div class="booking-summary">
+                <strong>{{ t.contact.bookingRequest }}</strong><br>
+                <span id="summary-dates"></span><br>
+                <span id="summary-guests"></span> &middot; <span id="summary-nights"></span> &middot; <strong>&euro;<span id="summary-price"></span></strong>
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="form-name">{{ t.contact.name }}</label>
+              <input type="text" id="form-name" name="name" required>
+            </div>
+
+            <div class="form-field">
+              <label for="form-email">{{ t.contact.yourEmail }}</label>
+              <input type="email" id="form-email" name="email" required>
+            </div>
+
+            <div class="form-field">
+              <label for="form-message">{{ t.contact.message }}</label>
+              <textarea id="form-message" name="message" rows="8" maxlength="5000"></textarea>
+            </div>
+
+            <div class="hp-field" aria-hidden="true" style="position:absolute; left:-9999px; top:-9999px; height:0; width:0; overflow:hidden;">
+              <label for="form-company">{{ t.contact.honeypot }}</label>
+              <input type="text" id="form-company" name="company" tabindex="-1" autocomplete="off">
+            </div>
+
+            <input type="hidden" id="form-checkin" name="checkin">
+            <input type="hidden" id="form-checkout" name="checkout">
+            <input type="hidden" id="form-guests" name="guests">
+            <input type="hidden" id="form-nights" name="nights">
+            <input type="hidden" id="form-price" name="price">
+
+            <input type="hidden" name="_subject" value="{{ t.contact.subject }}">
+
+            <button type="submit" class="btn-primary btn-full">{{ t.contact.send }}</button>
+
+            <div id="form-feedback" class="form-feedback"></div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+{{ footer }}
+  <script src="js/contact.js"></script>
+</body>
+</html>

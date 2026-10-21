@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{{ head }}
+</head>
+<body>
+{{ header }}
+
+  <main>
+    <!-- Page Intro -->
+    <section class="info-intro">
+      <div class="container text-center">
+        <h1>{{ t.info.heading }}</h1>
+        <p>{{ t.info.intro }}</p>
+      </div>
+    </section>
+
+    <!-- Split Images -->
+    <section class="info-split" data-reveal-group>
+      <div class="info-split-card">
+        <picture>
+          <source type="image/avif" srcset="{{ p.photos.exterior | avif }}">
+          <source type="image/webp" srcset="{{ p.photos.exterior | webp }}">
+          <img src="{{ p.photos.exterior }}" alt="{{ t.photos.exterior }}" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <div class="info-split-card">
+        <picture>
+          <source type="image/avif" srcset="{{ p.photos.view | avif }}">
+          <source type="image/webp" srcset="{{ p.photos.view | webp }}">
+          <img src="{{ p.photos.view }}" alt="{{ t.photos.view }}" loading="lazy" decoding="async">
+        </picture>
+      </div>
+    </section>
+
+
+    <!-- Interior Gallery -->
+    <section class="info-gallery-section" data-reveal>
+      <div class="container">
+        <h2>{{ t.info.galleryHeading }}</h2>
+
+        <div class="gallery-slideshow" id="gallery-slideshow">
+          <div class="gallery-main">
+            <picture>
+              <source type="image/avif" srcset="{{ gallery.first.src | avif }}">
+              <source type="image/webp" srcset="{{ gallery.first.src | webp }}">
+              <img id="gallery-main-img" src="{{ gallery.first.src }}" alt="{{ gallery.first.alt }}" class="gallery-main-img" loading="lazy" decoding="async">
+            </picture>
+            <button class="gallery-nav prev" aria-label="{{ t.info.previousImage }}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="gallery-nav next" aria-label="{{ t.info.nextImage }}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+
+          <div class="gallery-thumbs" id="gallery-thumbs">
+{{ gallery.thumbs }}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Amenities -->
+    <section class="info-amenities">
+      <div class="container">
+        <h2>{{ t.info.amenitiesHeading }}</h2>
+
+        <div class="amenities-grid" data-reveal-group>
+{{ amenities }}
+        </div>
+      </div>
+    </section>
+  </main>
+
+{{ footer }}
+  <script src="js/gallery.js"></script>
+</body>
+</html>

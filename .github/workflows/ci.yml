@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Test the build script
+        run: python -m unittest discover -s tests -v
+
+      - name: Build the site
+        run: python scripts/build.py
+
+      - name: Check the browser scripts parse
+        run: for f in js/*.js _site/js/property.js; do node --check "$f"; done

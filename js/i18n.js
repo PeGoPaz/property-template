@@ -2,6 +2,7 @@
  * UI string dictionaries.
  * Language is selected from the page's <html lang="…"> attribute.
  * Loaded BEFORE booking.js / calendar.js / contact.js, which read window.SITE_I18N.
+ * {property} in any string becomes the property's name from js/property.js.
  *
  * Review texts carry their own translations in js/reviews.js.
  */
@@ -71,8 +72,8 @@
       openingMail: 'Opening your email client...',
       genericError: 'Something went wrong. Please try again.',
       networkError: 'Network error. Please check your connection and try again.',
-      mailSubject: 'Booking Inquiry - Casa Esempio',
-      msgTemplate: 'Hello,\n\nI would like to request a booking at Casa Esempio:\n\n  Check-in:  {checkin}\n  Check-out: {checkout}\n  Guests:    {guests}\n  Duration:  {nights} {nightsWord}\n\n  Estimated Total Price: €{price}\n\nPlease confirm availability and let me know the next steps.\n\nThank you,',
+      mailSubject: 'Booking Inquiry - {property}',
+      msgTemplate: 'Hello,\n\nI would like to request a booking at {property}:\n\n  Check-in:  {checkin}\n  Check-out: {checkout}\n  Guests:    {guests}\n  Duration:  {nights} {nightsWord}\n\n  Estimated Total Price: €{price}\n\nPlease confirm availability and let me know the next steps.\n\nThank you,',
 
       // Reviews page
       reviewsFrom: 'from {n} guest reviews',
@@ -86,9 +87,12 @@
   const lang = (document.documentElement.getAttribute('lang') || 'en').slice(0, 2).toLowerCase();
   const dict = DICTS[lang] || DICTS.en;
 
+  const PROPERTY_NAME = (window.PROPERTY && window.PROPERTY.name) || '';
+
   /** Translate: t('msgMinStay', { min: 3, n: 2, nightsWord: '…' }) */
   function t(key, vars) {
     let str = dict[key] !== undefined ? dict[key] : (DICTS.en[key] !== undefined ? DICTS.en[key] : key);
+    if (typeof str === 'string') str = str.split('{property}').join(PROPERTY_NAME);
     if (vars) {
       for (const k in vars) {
         str = str.split('{' + k + '}').join(String(vars[k]));

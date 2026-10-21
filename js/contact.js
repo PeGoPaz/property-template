@@ -17,6 +17,8 @@
   const I18N = window.SITE_I18N || null;
   const T = I18N ? I18N.t : function (key) { return key; };
   const LOCALE = I18N ? I18N.locale : 'en-US';
+  // Set by js/property.js, which scripts/build.py generates from property.json.
+  const EMAIL = (window.PROPERTY && window.PROPERTY.email) || '';
 
   // ──────────────────────────────────────────────
   // VALIDATE URL PARAMETERS
@@ -181,7 +183,7 @@
       const body = encodeURIComponent(
         `From: ${name} (${email})\n\n${message}`
       );
-      window.location.href = `mailto:hello@example.com?subject=${subject}&body=${body}`;
+      window.location.href = `mailto:${EMAIL}?subject=${subject}&body=${body}`;
       showFeedback(T('openingMail'), 'success');
       return;
     }
