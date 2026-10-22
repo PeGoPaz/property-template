@@ -14,6 +14,7 @@ standard-library Python script.
 - Gallery, amenities, guest reviews from several platforms, and a contact form
   that arrives pre-filled from the booking flow
 - Any number of languages, with a language switch and hreflang links
+- Link previews for social networks and messengers, from the hero photo
 - Light and dark theme
 - Photos served as AVIF and WebP with a JPEG fallback
 
@@ -28,6 +29,10 @@ standard-library Python script.
 
 Leave `formspreeId` empty and the contact form opens the guest's email client
 instead.
+
+`photos.hero` must be a JPEG: besides opening the home page, it is the image a
+link to the site previews with on Facebook, WhatsApp, Slack and the like. Its
+size goes into the preview tags straight from the file.
 
 ### Prices
 

@@ -44,6 +44,7 @@ from datetime import date, timedelta
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import quote
 
 from markup import BuildError, Markup, attr, indent
 from reviews import check_reviews, reviews_context
@@ -211,6 +212,65 @@ def alternates(prop: dict, page: str, lang: str) -> Markup:
             links.append(f'<link rel="alternate" hreflang="{other}" href="{attr(page_url(base, page, other, default))}">')
         links.append(f'<link rel="alternate" hreflang="x-default" href="{attr(page_url(base, page, default, default))}">')
     return Markup(indent('\n'.join(links), 2))
+
+
+def jpeg_size(path: Path) -> tuple:
+    """(width, height) from a JPEG's frame header, so og:image sizes cannot go stale."""
+    data = path.read_bytes()
+    if data[:2] != b'\xff\xd8':
+        raise BuildError(f'{path.name} must be a JPEG: it is also the preview image social networks show')
+    i = 2
+    while i + 9 < len(data):
+        marker = data[i + 1]
+        if data[i] != 0xFF or marker == 0xFF:  # fill bytes before a marker
+            i += 1
+            continue
+        if marker == 0x01 or 0xD0 <= marker <= 0xD8:  # markers without a length
+            i += 2
+            continue
+        # SOF0-SOF15 carry the size; C4 (Huffman), C8 and CC (arithmetic coding) do not.
+        if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+            height = int.from_bytes(data[i + 5:i + 7], 'big')
+            width = int.from_bytes(data[i + 7:i + 9], 'big')
+            return width, height
+        i += 2 + int.from_bytes(data[i + 2:i + 4], 'big')
+    raise BuildError(f'{path.name}: no image size found in the JPEG')
+
+
+def og_locale(text: dict) -> str:
+    return text['ui']['locale'].replace('-', '_')  # en-US -> en_US
+
+
+def sharing(prop: dict, texts: dict, page: str, lang: str, image_size: tuple) -> Markup:
+    """Open Graph and Twitter tags: the title, text and photo a shared link previews with."""
+    base, default = prop['url'].rstrip('/'), prop['languages'][0]
+    text = texts[lang]
+    page_text = text['pages'][page]
+    image = f'{base}/{quote(prop["photos"]["hero"])}'  # the JPEG: not every scraper reads AVIF or WebP
+    alt = text['home']['heroAlt']
+
+    tags = [
+        ('property', 'og:type', 'website'),
+        ('property', 'og:site_name', prop['name']),
+        ('property', 'og:title', page_text['title']),
+        ('property', 'og:description', page_text['description']),
+        ('property', 'og:url', page_url(base, page, lang, default)),
+        ('property', 'og:image', image),
+        ('property', 'og:image:width', image_size[0]),
+        ('property', 'og:image:height', image_size[1]),
+        ('property', 'og:image:alt', alt),
+        ('property', 'og:locale', og_locale(text)),
+    ]
+    tags += [('property', 'og:locale:alternate', og_locale(texts[other])) for other in prop['languages'] if other != lang]
+    tags += [
+        ('name', 'twitter:card', 'summary_large_image'),
+        ('name', 'twitter:title', page_text['title']),
+        ('name', 'twitter:description', page_text['description']),
+        ('name', 'twitter:image', image),
+        ('name', 'twitter:image:alt', alt),
+    ]
+    return Markup(indent('\n'.join(f'<meta {kind}="{name}" content="{attr(str(value))}">'
+                                    for kind, name, value in tags), 2))
 
 
 def language_switch(prop: dict, text: dict, page: str, lang: str, root: str) -> Markup:
@@ -427,6 +487,7 @@ def build(root: Path = ROOT, out: Path = OUT) -> list:
     (out / 'js' / 'property.js').write_text(property_script(prop), encoding='utf-8')
 
     default = prop['languages'][0]
+    hero_size = jpeg_size(root / prop['photos']['hero'])
     written = []
     for lang, text in texts.items():
         root_path = '' if lang == default else '../'
@@ -436,6 +497,7 @@ def build(root: Path = ROOT, out: Path = OUT) -> list:
         for page in PAGES:
             page_context = dict(context, page=text['pages'][page],
                                 alternates=alternates(prop, page, lang),
+                                sharing=sharing(prop, texts, page, lang, hero_size),
                                 languageSwitch=language_switch(prop, text, page, lang, root_path))
             for name, source in partials.items():
                 page_context[name] = Markup(render(source, page_context, f'templates/_{name}.html'))

@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'scripts'))
 
 import build  # noqa: E402
-from build import BuildError, Markup, check_booking, fill_vars, render  # noqa: E402
+from build import BuildError, Markup, check_booking, fill_vars, jpeg_size, render  # noqa: E402
 
 
 class RenderTest(unittest.TestCase):
@@ -108,6 +108,24 @@ class CheckBookingTest(unittest.TestCase):
 
     def test_no_seasons(self):
         self.assertEqual(check_booking(booking(seasons=[])), ['seasons must list at least one season'])
+
+
+class JpegSizeTest(unittest.TestCase):
+    def test_reads_the_frame_header(self):
+        self.assertEqual(jpeg_size(ROOT / 'assets' / 'hero.jpg'), (1920, 1080))
+        self.assertEqual(jpeg_size(ROOT / 'assets' / 'exterior.jpg'), (1600, 1067))
+        self.assertEqual(jpeg_size(ROOT / 'assets' / 'logo.jpg'), (100, 100))
+
+    def test_rejects_other_formats(self):
+        with self.assertRaisesRegex(BuildError, 'favicon-32.png must be a JPEG'):
+            jpeg_size(ROOT / 'assets' / 'favicon-32.png')
+
+    def test_truncated_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'cut.jpg'
+            path.write_bytes((ROOT / 'assets' / 'hero.jpg').read_bytes()[:12])
+            with self.assertRaisesRegex(BuildError, 'cut.jpg: no image size found'):
+                jpeg_size(path)
 
 
 class BuildTest(unittest.TestCase):
@@ -221,6 +239,32 @@ class BuildTest(unittest.TestCase):
         self.assertIn('<a href="index.html" class="active" aria-current="page" lang="en" hreflang="en">EN</a>'
                       '<a href="it/index.html" lang="it" hreflang="it">IT</a>', english)
         self.assertIn('<a href="../index.html" lang="en" hreflang="en">EN</a>', italian)
+
+    def test_link_previews(self):
+        build.build(self.root, self.out)
+        english, italian = self.page('reviews'), self.page('it/reviews')
+        for html in (english, italian):
+            self.assertIn('<meta property="og:image" content="https://example.com/assets/hero.jpg">', html)
+            self.assertIn('<meta property="og:image:width" content="1920">', html)
+            self.assertIn('<meta property="og:image:height" content="1080">', html)
+            self.assertIn('<meta name="twitter:card" content="summary_large_image">', html)
+        self.assertIn('<meta property="og:title" content="Reviews - Casa Esempio">', english)
+        self.assertIn('<meta property="og:url" content="https://example.com/reviews.html">', english)
+        self.assertIn('<meta property="og:locale" content="en_US">', english)
+        self.assertIn('<meta property="og:locale:alternate" content="it_IT">', english)
+        self.assertIn('<meta property="og:title" content="Recensioni - Casa Esempio">', italian)
+        self.assertIn('<meta property="og:locale" content="it_IT">', italian)
+        self.assertIn('<meta name="twitter:image:alt" content="Casa Esempio sopra il Lago di Garda">', italian)
+
+    def test_link_preview_text_is_escaped(self):
+        self.edit_property(lambda p: p.update(name='Casa "Sole"'))
+        build.build(self.root, self.out)
+        self.assertIn('<meta property="og:site_name" content="Casa &quot;Sole&quot;">', self.page('index'))
+
+    def test_hero_photo_must_be_a_jpeg(self):
+        self.edit_property(lambda p: p['photos'].update(hero='assets/apple-touch-icon.png'))
+        with self.assertRaisesRegex(BuildError, 'apple-touch-icon.png must be a JPEG'):
+            build.build(self.root, self.out)
 
     def test_ui_strings_are_written_per_language(self):
         build.build(self.root, self.out)
