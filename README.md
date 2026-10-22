@@ -6,11 +6,12 @@ the site behind [villacaterina.casa](https://villacaterina.casa).
 The example property, Casa Esempio, is made up: its text, reviews, availability
 and photos are placeholders to replace with your own.
 
-Zero-dependency static site: vanilla HTML, CSS and JavaScript, built by one
-standard-library Python script.
+Zero-dependency static site: vanilla HTML, CSS and JavaScript, built by Python
+scripts that use only the standard library.
 
 - Home page with a booking calendar and seasonal pricing
-- Availability from a static `availability.json`
+- Availability merged from the iCal feeds of Booking.com, Airbnb, Vrbo and the
+  like, refreshed every 6 hours
 - Gallery, amenities, guest reviews from several platforms, and a contact form
   that arrives pre-filled from the booking flow
 - Any number of languages, with a language switch and hreflang links
@@ -20,6 +21,35 @@ standard-library Python script.
 - `sitemap.xml` listing every page in every language, and `robots.txt`
 - Light and dark theme
 - Photos served as AVIF and WebP with a JPEG fallback
+
+## Quick start
+
+1. Fork the repository, or clone it and push it to a new one.
+2. Describe the property in `property.json`: its name, the address the site
+   will be served at, languages, contact details, prices and seasons.
+3. Put your photos in `assets/`; each placeholder is labelled with the size its
+   spot expects. Then regenerate the AVIF and WebP versions (see [Photos](#photos)).
+4. Write the text in `content/<lang>.json` and the reviews in `reviews.json`.
+5. Run `python3 scripts/build.py --serve` and fix whatever it reports.
+6. Push, and switch on deployment as described under [Deploy](#deploy).
+
+Needs Python 3 (CI runs 3.12) and nothing else to build. Node.js is only used to
+run the JavaScript tests, and regenerating photo formats needs a Mac.
+
+```
+property.json          the property: name, address, languages, prices, photos
+reviews.json           guest reviews and the platforms they came from
+content/<lang>.json    every piece of text, one file per language
+templates/             page layouts; _*.html are shared parts
+css/, js/, assets/     styles, browser scripts, photos
+availability.json      blocked dates (a sample until the iCal sync runs)
+scripts/
+  build.py             builds _site/ from all of the above
+  reviews.py           validates and renders the reviews
+  sync_availability.py fetches the iCal feeds into availability.json
+  build_images.py      writes AVIF and WebP next to every JPEG (macOS)
+tests/                 Python unittest and node:test suites
+```
 
 ## Making it yours
 
@@ -154,9 +184,14 @@ repository; re-enable it from the Actions tab if the calendar stops updating.
 ## Photos
 
 Each placeholder in `assets/` is labelled with its file name and size. Replace
-the JPEGs with your own photos, then regenerate the AVIF and WebP versions
-(needs `cwebp` and the Xcode command line tools):
+the JPEGs with your own photos, then regenerate the AVIF and WebP versions. It
+runs on macOS, which provides the AVIF encoder, and needs `cwebp`
+(`brew install webp`) and the Xcode command line tools:
 
 ```bash
 python3 scripts/build_images.py
 ```
+
+Only files that are newer than their AVIF and WebP are re-encoded. A photo with
+an odd width or height loses its last row or column in the AVIF, because
+Chrome shows an odd-sized AVIF from macOS's encoder as a blank image.
