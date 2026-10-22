@@ -109,6 +109,11 @@ builds the site into `_site/` and serves it on http://localhost:8000. A typo in
 a template placeholder, a photo that does not exist or a gallery photo without
 a caption stops the build with a message saying which.
 
+Links to the site's own CSS and JavaScript get a hash of the file appended
+(`js/booking.js?v=cccefb6a23`). When a file changes, so does its link, and
+browsers fetch the new version straight after a deploy instead of running a
+cached old script against the new pages.
+
 ```bash
 python3 -m unittest discover -s tests
 node --test tests/*.test.js

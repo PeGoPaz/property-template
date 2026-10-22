@@ -1,4 +1,6 @@
+import hashlib
 import json
+import re
 import shutil
 import sys
 import tempfile
@@ -200,8 +202,8 @@ class BuildTest(unittest.TestCase):
         build.build(self.root, self.out)
         html = self.page('it/info')
         self.assertIn('<html lang="it">', html)
-        self.assertIn('<link rel="stylesheet" href="../css/styles.css">', html)
-        self.assertIn('<script src="../js/strings.it.js"></script>', html)
+        self.assertIn('<link rel="stylesheet" href="../css/styles.css?v=', html)
+        self.assertIn('<script src="../js/strings.it.js?v=', html)
         self.assertIn('<img src="../assets/exterior.jpg" alt="La casa vista dal giardino"', html)
         self.assertIn('data-src="../assets/inside/kitchen.jpg" data-alt="Cucina"', html)
         self.assertIn('<h1>La casa</h1>', html)
@@ -272,6 +274,35 @@ class BuildTest(unittest.TestCase):
             build.build(self.root, self.out)
         self.edit_property(lambda p: p.update(languages=['en'], url='example.com'))
         with self.assertRaisesRegex(BuildError, 'url must be the address'):
+            build.build(self.root, self.out)
+
+    def test_own_scripts_and_styles_carry_a_content_hash(self):
+        build.build(self.root, self.out)
+        html = self.page('index')
+        booking = hashlib.sha256((self.out / 'js' / 'booking.js').read_bytes()).hexdigest()[:10]
+        self.assertIn(f'<script src="js/booking.js?v={booking}"></script>', html)
+        self.assertIn(f'<script src="../js/booking.js?v={booking}"></script>', self.page('it/index'))
+        self.assertRegex(html, r'<link rel="stylesheet" href="css/styles.css\?v=[0-9a-f]{10}">')
+        for page in ('index', 'info', 'reviews', 'contact', 'it/contact'):
+            self.assertNotRegex(self.page(page), r'(src|href)="(\.\./)*(js|css)/[^"?]+"', page)
+
+    def test_changing_a_script_changes_only_its_hash(self):
+        def versions():
+            return dict(re.findall(r'js/([\w.-]+\.js)\?v=(\w+)', self.page('index')))
+
+        build.build(self.root, self.out)
+        before = versions()
+        with open(self.root / 'js' / 'booking.js', 'a') as f:
+            f.write('\n// changed\n')
+        build.build(self.root, self.out)
+        after = versions()
+        self.assertNotEqual(before.pop('booking.js'), after.pop('booking.js'))
+        self.assertEqual(before, after)
+
+    def test_link_to_a_missing_script_stops_the_build(self):
+        path = self.root / 'templates' / 'info.html'
+        path.write_text(path.read_text().replace('</body>', '  <script src="{{ root }}js/missing.js"></script>\n</body>'))
+        with self.assertRaisesRegex(BuildError, 'templates/info.html links to js/missing.js, which the built site does not have'):
             build.build(self.root, self.out)
 
     def test_reviews_are_in_the_html(self):

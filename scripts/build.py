@@ -24,11 +24,17 @@ site's own files start with {{ root }}, which is '../' on translated pages.
 Text may say {name}, {minNights} or {maxGuests}; they are filled in from
 property.json.
 
+Every link a page makes to the site's own CSS or JavaScript gets ?v=<hash of
+the file> appended, so after a deploy browsers fetch the new files instead of
+running a cached old script against new pages. A link to a file the site does
+not have fails the build.
+
   python3 scripts/build.py           build into _site/
   python3 scripts/build.py --serve   build, then serve it on http://localhost:8000
 """
 
 import argparse
+import hashlib
 import html
 import json
 import re
@@ -54,6 +60,9 @@ REQUIRED = ['name', 'url', 'languages', 'email', 'address', 'booking', 'photos',
 REQUIRED_PHOTOS = ['logo', 'favicon', 'appleTouchIcon', 'hero', 'exterior', 'view']
 
 PLACEHOLDER = re.compile(r'\{\{\s*([\w.-]+)\s*(?:\|\s*(\w+)\s*)?\}\}')
+
+# src="js/booking.js", href="../css/styles.css": the site's own scripts and styles.
+OWN_ASSET = re.compile(r'\b(src|href)="((?:\.\./)*(?:js|css)/[^"?#]+)"')
 
 FILTERS = {
     'avif': lambda v: re.sub(r'\.jpg$', '.avif', v),
@@ -435,10 +444,27 @@ def build(root: Path = ROOT, out: Path = OUT) -> list:
 
             path = page_path(page, lang, default)
             (out / path).parent.mkdir(parents=True, exist_ok=True)
-            (out / path).write_text(render(sources[page], page_context, f'templates/{page}.html'),
+            page_html = render(sources[page], page_context, f'templates/{page}.html')
+            (out / path).write_text(fingerprint(page_html, (out / path).parent, f'templates/{page}.html'),
                                     encoding='utf-8')
             written.append(path)
     return written
+
+
+def file_hash(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()[:10]
+
+
+def fingerprint(page_html: str, page_dir: Path, name: str) -> str:
+    """Append ?v=<content hash> to every link to the site's own CSS and JS."""
+    def replace(match):
+        attribute, url = match.groups()
+        target = page_dir / url
+        if not target.is_file():
+            raise BuildError(f'{name} links to {url}, which the built site does not have')
+        return f'{attribute}="{url}?v={file_hash(target)}"'
+
+    return OWN_ASSET.sub(replace, page_html)
 
 
 def serve(port: int) -> None:
