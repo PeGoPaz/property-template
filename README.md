@@ -15,6 +15,8 @@ standard-library Python script.
   that arrives pre-filled from the booking flow
 - Any number of languages, with a language switch and hreflang links
 - Link previews for social networks and messengers, from the hero photo
+- Structured data (schema.org `LodgingBusiness`) with the price range and
+  rating worked out from the seasons and reviews
 - Light and dark theme
 - Photos served as AVIF and WebP with a JPEG fallback
 

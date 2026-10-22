@@ -22,6 +22,11 @@ class RenderTest(unittest.TestCase):
     def test_inserts_markup_as_is(self):
         self.assertEqual(render('{{ x }}', {'x': Markup('<b>ok</b>')}), '<b>ok</b>')
 
+    def test_line_with_only_an_empty_placeholder_is_dropped(self):
+        template = '<head>\n  {{ a }}\n  {{ b }}\n</head>\n<p>{{ b }}</p>\n'
+        self.assertEqual(render(template, {'a': Markup(''), 'b': ''}), '<head>\n</head>\n<p></p>\n')
+        self.assertEqual(render(template, {'a': Markup('<x>'), 'b': ''}), '<head>\n  <x>\n</head>\n<p></p>\n')
+
     def test_tolerates_spacing(self):
         self.assertEqual(render('{{x}}|{{   x   }}', {'x': 'a'}), 'a|a')
 
@@ -265,6 +270,48 @@ class BuildTest(unittest.TestCase):
         self.edit_property(lambda p: p['photos'].update(hero='assets/apple-touch-icon.png'))
         with self.assertRaisesRegex(BuildError, 'apple-touch-icon.png must be a JPEG'):
             build.build(self.root, self.out)
+
+    def structured_data(self, page):
+        found = re.findall(r'<script type="application/ld\+json">(.*?)</script>', self.page(page), re.S)
+        return [json.loads(block) for block in found]
+
+    def test_structured_data_on_the_home_page_only(self):
+        build.build(self.root, self.out)
+        [english] = self.structured_data('index')
+        [italian] = self.structured_data('it/index')
+        self.assertEqual(english['@type'], 'LodgingBusiness')
+        self.assertEqual(english['url'], 'https://example.com/')
+        self.assertEqual(italian['url'], 'https://example.com/it/')
+        self.assertTrue(italian['description'].startswith('Casa Esempio - una casa vacanze'))
+        self.assertEqual(english['priceRange'], '180-280 EUR')
+        self.assertEqual(english['availableLanguage'], ['en', 'it'])
+        self.assertEqual(english['aggregateRating']['ratingValue'], 4.75)
+        self.assertEqual(english['aggregateRating']['reviewCount'], 6)
+        for page in ('info', 'reviews', 'contact', 'it/info'):
+            self.assertEqual(self.structured_data(page), [], page)
+
+    def test_structured_data_cannot_close_its_script_tag(self):
+        name = 'Casa </script><script>alert(1)</script>'
+        self.edit_property(lambda p: p.update(name=name))
+        build.build(self.root, self.out)
+        [data] = self.structured_data('index')
+        self.assertEqual(data['name'], name)  # the block ends where it should and keeps the text
+        self.assertNotIn('</script><script>alert(1)', self.page('index'))
+
+    def test_structured_data_without_reviews_or_social_links(self):
+        def change(p):
+            p['social'] = {'facebook': '', 'instagram': ''}
+            p['booking']['seasons'] = [{'from': '01-01', 'to': '12-31', 'nightly': 95}]
+        self.edit_property(change)
+        path = self.root / 'reviews.json'
+        data = json.loads(path.read_text())
+        data['reviews'] = []
+        path.write_text(json.dumps(data))
+        build.build(self.root, self.out)
+        [data] = self.structured_data('index')
+        self.assertNotIn('aggregateRating', data)
+        self.assertNotIn('sameAs', data)
+        self.assertEqual(data['priceRange'], '95 EUR')
 
     def test_ui_strings_are_written_per_language(self):
         build.build(self.root, self.out)

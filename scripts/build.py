@@ -61,6 +61,8 @@ REQUIRED = ['name', 'url', 'languages', 'email', 'address', 'booking', 'photos',
 REQUIRED_PHOTOS = ['logo', 'favicon', 'appleTouchIcon', 'hero', 'exterior', 'view']
 
 PLACEHOLDER = re.compile(r'\{\{\s*([\w.-]+)\s*(?:\|\s*(\w+)\s*)?\}\}')
+# A placeholder alone on its line; if it renders to nothing, the line goes too.
+STANDALONE = re.compile(r'^[ \t]*(\{\{[^{}]*\}\})[ \t]*\n', re.M)
 
 # src="js/booking.js", href="../css/styles.css": the site's own scripts and styles.
 OWN_ASSET = re.compile(r'\b(src|href)="((?:\.\./)*(?:js|css)/[^"?#]+)"')
@@ -101,6 +103,10 @@ def render(template: str, context: dict, name: str = 'template') -> str:
             return value
         return html.escape(str(value))
 
+    def drop_if_empty(match):
+        return '' if PLACEHOLDER.sub(replace, match.group(1)) == '' else match.group(0)
+
+    template = STANDALONE.sub(drop_if_empty, template)
     return PLACEHOLDER.sub(replace, template)
 
 
@@ -271,6 +277,52 @@ def sharing(prop: dict, texts: dict, page: str, lang: str, image_size: tuple) ->
     ]
     return Markup(indent('\n'.join(f'<meta {kind}="{name}" content="{attr(str(value))}">'
                                     for kind, name, value in tags), 2))
+
+
+def price_range(booking: dict) -> str:
+    rates = [season['nightly'] for season in booking['seasons']]
+    low, high = min(rates), max(rates)
+    amounts = f'{low:g}' if low == high else f'{low:g}-{high:g}'
+    return f'{amounts} {booking["currency"]}'
+
+
+def structured_data(prop: dict, text: dict, lang: str, reviews: dict) -> Markup:
+    """
+    JSON-LD describing the property, for the home page. ld+json is a data block,
+    so CSP's script-src 'self' does not stop it.
+
+    Google does not show star ratings for reviews a business publishes about
+    itself, wherever they were first written, so aggregateRating will not put
+    stars in search results; it still tells search engines what guests think.
+    """
+    base, default = prop['url'].rstrip('/'), prop['languages'][0]
+    data = {
+        '@context': 'https://schema.org',
+        '@type': 'LodgingBusiness',
+        'name': prop['name'],
+        'description': text['pages']['index']['description'],
+        'url': page_url(base, 'index', lang, default),
+        'image': f'{base}/{quote(prop["photos"]["hero"])}',
+        'email': prop['email'],
+        'address': prop['address'],
+        'priceRange': price_range(prop['booking']),
+        'availableLanguage': prop['languages'],
+    }
+    same_as = [url for url in prop.get('social', {}).values() if url]
+    if same_as:
+        data['sameAs'] = same_as
+    if reviews['count']:
+        data['aggregateRating'] = {
+            '@type': 'AggregateRating',
+            'ratingValue': reviews['ratingValue'],
+            'reviewCount': reviews['count'],
+            'bestRating': 5,
+            'worstRating': 1,
+        }
+    # "</" would end the script element early: a name like "</script><script>..."
+    # must stay data. JSON allows "\/" for "/", so the value is unchanged.
+    body = json.dumps(data, indent=2, ensure_ascii=False).replace('</', '<\\/')
+    return Markup(indent('<script type="application/ld+json">\n' + body + '\n</script>', 2))
 
 
 def language_switch(prop: dict, text: dict, page: str, lang: str, root: str) -> Markup:
@@ -498,6 +550,8 @@ def build(root: Path = ROOT, out: Path = OUT) -> list:
             page_context = dict(context, page=text['pages'][page],
                                 alternates=alternates(prop, page, lang),
                                 sharing=sharing(prop, texts, page, lang, hero_size),
+                                structuredData=(structured_data(prop, text, lang, context['reviews'])
+                                                if page == 'index' else Markup('')),
                                 languageSwitch=language_switch(prop, text, page, lang, root_path))
             for name, source in partials.items():
                 page_context[name] = Markup(render(source, page_context, f'templates/_{name}.html'))

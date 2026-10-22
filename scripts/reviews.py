@@ -196,6 +196,8 @@ def reviews_context(data: dict, text: dict, page_lang: str = 'en') -> dict:
     return {
         'count': count,
         'rating': average(out_of_five, 1, text) if count else '',
+        # Unrounded for display, as a number for structured data.
+        'ratingValue': float(round_half_up(sum(out_of_five) / count, 2)) if count else None,
         'countText': text['reviews']['countText'].replace('{n}', str(count)),
         'featured': Markup(indent(featured_cards, 10)),
         'sections': Markup(indent('\n\n'.join(sections), 4)),
