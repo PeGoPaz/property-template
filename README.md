@@ -17,6 +17,7 @@ standard-library Python script.
 - Link previews for social networks and messengers, from the hero photo
 - Structured data (schema.org `LodgingBusiness`) with the price range and
   rating worked out from the seasons and reviews
+- `sitemap.xml` listing every page in every language, and `robots.txt`
 - Light and dark theme
 - Photos served as AVIF and WebP with a JPEG fallback
 
@@ -140,7 +141,12 @@ leaves the live site as it was.
    - secret `ICAL_URLS`, one feed URL per line. Without it the calendar shows
      the sample `availability.json`, and each run says so in a warning.
 3. Set `url` in `property.json` to the address the site is served at, for
-   example `https://<user>.github.io/<repository>` or your own domain.
+   example `https://<user>.github.io/<repository>` or your own domain. The
+   canonical links, link previews, structured data and sitemap are built from it.
+
+Crawlers only read `robots.txt` at the root of a domain, so on a project site
+like `https://<user>.github.io/<repository>/` it is ignored. Submit
+`<url>/sitemap.xml` in Google Search Console instead, or use your own domain.
 
 GitHub pauses scheduled workflows after 60 days without activity in the
 repository; re-enable it from the Actions tab if the calendar stops updating.

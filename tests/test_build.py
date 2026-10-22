@@ -5,6 +5,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -312,6 +313,41 @@ class BuildTest(unittest.TestCase):
         self.assertNotIn('aggregateRating', data)
         self.assertNotIn('sameAs', data)
         self.assertEqual(data['priceRange'], '95 EUR')
+
+    def sitemap(self):
+        ns = {'s': 'http://www.sitemaps.org/schemas/sitemap/0.9', 'x': 'http://www.w3.org/1999/xhtml'}
+        root = ET.parse(self.out / 'sitemap.xml').getroot()
+        return {url.find('s:loc', ns).text: {link.get('hreflang'): link.get('href') for link in url.findall('x:link', ns)}
+                for url in root.findall('s:url', ns)}
+
+    def test_sitemap_lists_every_page_with_its_translations(self):
+        build.build(self.root, self.out)
+        entries = self.sitemap()
+        self.assertEqual(sorted(entries), sorted([
+            'https://example.com/', 'https://example.com/it/',
+            'https://example.com/info.html', 'https://example.com/it/info.html',
+            'https://example.com/reviews.html', 'https://example.com/it/reviews.html',
+            'https://example.com/contact.html', 'https://example.com/it/contact.html',
+        ]))
+        self.assertEqual(entries['https://example.com/it/info.html'], {
+            'en': 'https://example.com/info.html',
+            'it': 'https://example.com/it/info.html',
+            'x-default': 'https://example.com/info.html',
+        })
+
+    def test_sitemap_for_one_language_has_no_alternates(self):
+        self.edit_property(lambda p: p.update(languages=['en'], url='https://villa.example/'))
+        build.build(self.root, self.out)
+        entries = self.sitemap()
+        self.assertEqual(len(entries), 4)
+        self.assertEqual(set(map(len, entries.values())), {0})
+        self.assertNotIn('xhtml', (self.out / 'sitemap.xml').read_text())
+        self.assertIn('https://villa.example/info.html', entries)  # no double slash from the trailing one
+
+    def test_robots_points_at_the_sitemap(self):
+        build.build(self.root, self.out)
+        self.assertEqual((self.out / 'robots.txt').read_text(),
+                         'User-agent: *\nAllow: /\n\nSitemap: https://example.com/sitemap.xml\n')
 
     def test_ui_strings_are_written_per_language(self):
         build.build(self.root, self.out)

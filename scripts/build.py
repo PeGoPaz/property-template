@@ -511,6 +511,30 @@ def strings_script(text: dict) -> str:
             f'window.SITE_STRINGS = {json.dumps(text["ui"], ensure_ascii=False, indent=2)};\n')
 
 
+def sitemap(prop: dict) -> str:
+    """Every page in every language, each listing its translations, as search engines expect."""
+    base, languages = prop['url'].rstrip('/'), prop['languages']
+    default = languages[0]
+    multilingual = len(languages) > 1
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
+             + (' xmlns:xhtml="http://www.w3.org/1999/xhtml">' if multilingual else '>')]
+    for page in PAGES:
+        for lang in languages:
+            lines += ['  <url>', f'    <loc>{attr(page_url(base, page, lang, default))}</loc>']
+            if multilingual:
+                for other in languages + ['x-default']:
+                    href = page_url(base, page, default if other == 'x-default' else other, default)
+                    lines.append(f'    <xhtml:link rel="alternate" hreflang="{other}" href="{attr(href)}"/>')
+            lines.append('  </url>')
+    lines.append('</urlset>')
+    return '\n'.join(lines) + '\n'
+
+
+def robots(prop: dict) -> str:
+    return f'User-agent: *\nAllow: /\n\nSitemap: {prop["url"].rstrip("/")}/sitemap.xml\n'
+
+
 def build(root: Path = ROOT, out: Path = OUT) -> list:
     prop = load_json(root / 'property.json', root)
     check_property(prop, root)
@@ -564,6 +588,9 @@ def build(root: Path = ROOT, out: Path = OUT) -> list:
             (out / path).write_text(fingerprint(page_html, (out / path).parent, f'templates/{page}.html'),
                                     encoding='utf-8')
             written.append(path)
+
+    (out / 'sitemap.xml').write_text(sitemap(prop), encoding='utf-8')
+    (out / 'robots.txt').write_text(robots(prop), encoding='utf-8')
     return written
 
 
