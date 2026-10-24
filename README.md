@@ -184,6 +184,13 @@ like `https://<user>.github.io/<repository>/` it is ignored. Submit
 GitHub pauses scheduled workflows after 60 days without activity in the
 repository; re-enable it from the Actions tab if the calendar stops updating.
 
+`_headers` sets the security headers on hosts that read it, such as Netlify and
+Cloudflare Pages. GitHub Pages ignores it. There the Content Security Policy
+still applies from the `<meta>` tag in `templates/_head.html`, but the
+protections only a header can carry do not: `frame-ancestors` and
+`X-Frame-Options` against framing, and HSTS. When you change the policy, change
+it in both places; a test fails if they disagree.
+
 ## Photos
 
 Each placeholder in `assets/` is labelled with its file name and size. Replace

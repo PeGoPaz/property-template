@@ -199,6 +199,16 @@ class BuildTest(unittest.TestCase):
             self.assertFalse(' style="' in html, f'{name} has a style attribute')
             self.assertFalse("'unsafe-inline'" in html, f'{name} allows inline styles')
 
+    def test_csp_meta_matches_headers(self):
+        # GitHub Pages ignores _headers, so the <meta> copy is what protects
+        # the site there. frame-ancestors is the one directive a <meta> CSP
+        # cannot carry.
+        build.build(self.root, self.out)
+        meta = re.search(r'http-equiv="Content-Security-Policy" content="([^"]+)"', self.page('index')).group(1)
+        header = re.search(r'Content-Security-Policy: (.+)', (self.root / '_headers').read_text()).group(1)
+        directives = lambda csp: {d.strip() for d in csp.split(';') if d.strip()}
+        self.assertEqual(directives(meta), directives(header) - {"frame-ancestors 'none'"})
+
     def test_contact_form_messages_reach_screen_readers(self):
         build.build(self.root, self.out)
         html = self.page('contact')
