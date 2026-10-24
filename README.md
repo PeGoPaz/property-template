@@ -24,7 +24,10 @@ scripts that use only the standard library.
 
 ## Quick start
 
-1. Fork the repository, or clone it and push it to a new one.
+1. Click **Use this template** at the top of the repository on GitHub, then
+   **Create a new repository**. Unlike a fork, the copy starts with a clean
+   history, can be private, and is not tied to this repository. Without
+   GitHub, clone it and push it to a new repository.
 2. Describe the property in `property.json`: its name, the address the site
    will be served at, languages, contact details, prices and seasons.
 3. Put your photos in `assets/`; each placeholder is labelled with the size its
