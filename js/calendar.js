@@ -26,6 +26,7 @@
 
   let selectionState = MODE_CHECKIN;  // what the next click selects
   let focusAfterRender = null;        // dateKey to re-focus after render()
+  let activeKey = null;               // dateKey of the calendar's one tab stop
   let checkinDate  = null;            // Date objects (local midnight)
   let checkoutDate = null;
 
@@ -172,7 +173,20 @@
       $container.appendChild(warn);
     }
 
-    // Restore focus after the rebuild; if the day is no longer selectable, leave it.
+    // One tab stop for the whole calendar (roving tabindex): the day last
+    // moved to, else the check-in, else the first day that can be picked.
+    // Arrow keys move between days, so Tab steps past the calendar in one
+    // press instead of one per day.
+    const stop = (activeKey && $container.querySelector(`[data-date="${activeKey}"]`))
+      || $container.querySelector('.cal-cell.selected')
+      || $container.querySelector('.cal-cell[data-date]:not([aria-disabled])')
+      || $container.querySelector('.cal-cell[data-date]');
+    if (stop) {
+      stop.tabIndex = 0;
+      activeKey = stop.dataset.date;
+    }
+
+    // Restore focus after the rebuild.
     if (focusAfterRender) {
       const target = $container.querySelector(`[data-date="${focusAfterRender}"]`);
       focusAfterRender = null;
@@ -250,6 +264,13 @@
 
         if (selectable) {
           makeSelectable(cell, cellDate);
+        } else if (!isPast(cellDate)) {
+          // Booked and closed days can be reached with the arrow keys, so
+          // their reason is read out, but not picked.
+          cell.setAttribute('role', 'button');
+          cell.setAttribute('aria-disabled', 'true');
+          cell.tabIndex = -1;
+          cell.dataset.date = dateKey(cellDate);
         }
       }
 
@@ -269,12 +290,12 @@
     const picked = new Date(cellDate);
 
     cell.setAttribute('role', 'button');
-    cell.setAttribute('tabindex', '0');
+    cell.tabIndex = -1; // render() makes one day the tab stop
     cell.setAttribute('aria-label', describeDate(picked));
     cell.dataset.date = dateKey(picked);
 
     function activate() {
-      focusAfterRender = dateKey(picked); // render() rebuilds every cell
+      focusAfterRender = activeKey = dateKey(picked); // render() rebuilds every cell
       handleDateClick(new Date(picked));
     }
 
@@ -286,6 +307,48 @@
       }
     });
   }
+
+  // Arrow keys move a day or a week, Home and End to the ends of the week,
+  // Page Up and Page Down a month. The two-month view follows the focus.
+  function moveFocus(from, key) {
+    const d = new Date(from);
+    const weekday = (d.getDay() + 6) % 7; // Monday = 0
+    switch (key) {
+      case 'ArrowLeft':  d.setDate(d.getDate() - 1); break;
+      case 'ArrowRight': d.setDate(d.getDate() + 1); break;
+      case 'ArrowUp':    d.setDate(d.getDate() - 7); break;
+      case 'ArrowDown':  d.setDate(d.getDate() + 7); break;
+      case 'Home':       d.setDate(d.getDate() - weekday); break;
+      case 'End':        d.setDate(d.getDate() + 6 - weekday); break;
+      case 'PageUp':
+      case 'PageDown': {
+        // The same day a month away, or that month's last day: 31 March goes
+        // to 28 February, where setMonth alone would land on 3 March.
+        const day = d.getDate();
+        d.setDate(1);
+        d.setMonth(d.getMonth() + (key === 'PageUp' ? -1 : 1));
+        d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
+        break;
+      }
+      default: return false;
+    }
+    const target = isPast(d) ? new Date(today) : d;
+    activeKey = focusAfterRender = dateKey(target);
+
+    const first = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
+    const afterLast = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 2, 1);
+    if (target < first) viewMonth = new Date(target.getFullYear(), target.getMonth(), 1);
+    else if (target >= afterLast) viewMonth = new Date(target.getFullYear(), target.getMonth() - 1, 1);
+    render();
+    return true;
+  }
+
+  $container.addEventListener('keydown', function (e) {
+    const cell = e.target.closest('.cal-cell[data-date]');
+    if (!cell || e.altKey || e.ctrlKey || e.metaKey) return;
+    const [y, m, d] = cell.dataset.date.split('-').map(Number);
+    if (moveFocus(new Date(y, m - 1, d), e.key)) e.preventDefault();
+  });
 
   function dayLabel(d) {
     return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
