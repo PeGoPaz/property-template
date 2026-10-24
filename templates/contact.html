@@ -57,7 +57,7 @@
             <h2>{{ t.contact.formHeading }}</h2>
             
             <!-- Booking details (read-only display) -->
-            <div id="booking-details-summary" style="display: none;">
+            <div id="booking-details-summary" hidden>
               <div class="booking-summary">
                 <strong>{{ t.contact.bookingRequest }}</strong><br>
                 <span id="summary-dates"></span><br>
@@ -80,7 +80,7 @@
               <textarea id="form-message" name="message" rows="8" maxlength="5000"></textarea>
             </div>
 
-            <div class="hp-field" aria-hidden="true" style="position:absolute; left:-9999px; top:-9999px; height:0; width:0; overflow:hidden;">
+            <div class="hp-field" aria-hidden="true">
               <label for="form-company">{{ t.contact.honeypot }}</label>
               <input type="text" id="form-company" name="company" tabindex="-1" autocomplete="off">
             </div>

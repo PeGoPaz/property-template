@@ -15,6 +15,13 @@ picture {
   display: contents;
 }
 
+/* The hidden attribute replaces inline style="display: none", which the CSP
+   blocks. !important, because a class that sets display would otherwise
+   override it and show the element. */
+[hidden] {
+  display: none !important;
+}
+
 /* Read by screen readers, invisible on screen. */
 .visually-hidden {
   position: absolute;
@@ -988,6 +995,17 @@ main {
   box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
 }
 
+/* The spam trap: off screen rather than display: none, because some bots skip
+   fields that are not rendered. */
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
 .form-feedback {
   margin-top: 1rem;
   padding: 0.75rem 1rem;
@@ -1674,11 +1692,6 @@ main {
   letter-spacing: 0.01em;
   cursor: pointer;
   transition: background var(--transition), border-color var(--transition), color var(--transition);
-}
-
-/* Rendered hidden; js/reviews.js shows it, since it does nothing without JS. */
-.review-toggle[hidden] {
-  display: none;
 }
 
 .review-toggle:hover {

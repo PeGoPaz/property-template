@@ -16,8 +16,9 @@
     const isOpen = menu.classList.toggle('open');
     btn.setAttribute('aria-expanded', String(isOpen));
     if (menuIcon && closeIcon) {
-      menuIcon.style.display = isOpen ? 'none' : '';
-      closeIcon.style.display = isOpen ? '' : 'none';
+      // toggleAttribute, not .hidden: these are SVG elements.
+      menuIcon.toggleAttribute('hidden', isOpen);
+      closeIcon.toggleAttribute('hidden', !isOpen);
     }
   });
 
@@ -27,8 +28,8 @@
       menu.classList.remove('open');
       btn.setAttribute('aria-expanded', 'false');
       if (menuIcon && closeIcon) {
-        menuIcon.style.display = '';
-        closeIcon.style.display = 'none';
+        menuIcon.removeAttribute('hidden');
+        closeIcon.setAttribute('hidden', '');
       }
     });
   });

@@ -106,7 +106,7 @@
     $priceField.value = price;
 
     // Show booking summary
-    $summarySect.style.display = 'block';
+    $summarySect.hidden = false;
     $summaryDates.textContent = `${checkinFormatted} → ${checkoutFormatted}`;
     $summaryGuests.textContent = `${guests} ${I18N ? I18N.plural(guests, 'guest', 'guests') : (guests === '1' ? 'guest' : 'guests')}`;
     $summaryNights.textContent = `${nights} ${I18N ? I18N.plural(nights, 'night', 'nights') : (nights === '1' ? 'night' : 'nights')}`;

@@ -189,6 +189,16 @@ class BuildTest(unittest.TestCase):
                       'data-src="assets/inside/kitchen.jpg"', html)
         self.assertEqual(html.count('aria-current="true"'), 1)
 
+    def test_pages_carry_no_inline_styles(self):
+        # The CSP (in each page's <meta> and in _headers) allows styles from
+        # the stylesheet only, so a style="" attribute would be ignored.
+        build.build(self.root, self.out)
+        for page in self.out.rglob('*.html'):
+            html = page.read_text()
+            name = page.relative_to(self.out)
+            self.assertFalse(' style="' in html, f'{name} has a style attribute')
+            self.assertFalse("'unsafe-inline'" in html, f'{name} allows inline styles')
+
     def test_contact_form_messages_reach_screen_readers(self):
         build.build(self.root, self.out)
         html = self.page('contact')
