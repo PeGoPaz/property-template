@@ -185,7 +185,9 @@ class BuildTest(unittest.TestCase):
         html = self.page('info')
         self.assertEqual(html.count(' data-src='), 2)
         self.assertIn('id="gallery-main-img" src="assets/inside/kitchen.jpg" alt="Kitchen"', html)
-        self.assertIn('class="gallery-thumb active" data-src="assets/inside/kitchen.jpg"', html)
+        self.assertIn('<button type="button" class="gallery-thumb active" aria-current="true" '
+                      'data-src="assets/inside/kitchen.jpg"', html)
+        self.assertEqual(html.count('aria-current="true"'), 1)
 
     def test_contact_form_without_formspree_falls_back_to_email(self):
         build.build(self.root, self.out)

@@ -9,6 +9,7 @@
   const thumbs = document.querySelectorAll('.gallery-thumb');
   const prevBtn = document.querySelector('.gallery-nav.prev');
   const nextBtn = document.querySelector('.gallery-nav.next');
+  const status = document.getElementById('gallery-status');
   
   if (!mainImg || !thumbs.length || !prevBtn || !nextBtn) return;
 
@@ -42,8 +43,14 @@
     clearTimeout(pendingSwap);
 
     thumbs[currentIndex].classList.remove('active');
+    thumbs[currentIndex].removeAttribute('aria-current');
     thumbs[index].classList.add('active');
+    thumbs[index].setAttribute('aria-current', 'true');
     currentIndex = index;
+
+    // The new photo is otherwise silent to a screen reader: the main image's
+    // alt changes, but nothing says so.
+    if (status) status.textContent = `${thumbs[index].dataset.alt} (${index + 1}/${totalImages})`;
 
     // Fade out
     mainImg.classList.add('fade');
@@ -89,8 +96,9 @@
   prevBtn.addEventListener('click', prevImage);
   nextBtn.addEventListener('click', nextImage);
 
-  // Thumbnails are plain divs and never take focus, so the listener sits on the
-  // document and is scoped by hand instead.
+  // Arrow keys work whenever the gallery is on screen, not only while one of
+  // its buttons has focus, so the listener sits on the document and is scoped
+  // by hand.
   const gallery = mainImg.closest('.info-gallery-section') || mainImg.parentElement;
 
   function isTyping() {

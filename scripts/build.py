@@ -169,11 +169,13 @@ def text_for(text: dict, section: str, key: str):
 def gallery(prop: dict, text: dict, root: str) -> dict:
     items = [(root + g['src'], text_for(text, 'gallery', g['id'])) for g in prop['gallery']]
     thumbs = []
+    # Buttons, so a keyboard can reach every photo; the image's alt text is
+    # the button's name, and aria-current marks the one on show.
     for i, (src, alt) in enumerate(items):
-        cls = 'gallery-thumb active' if i == 0 else 'gallery-thumb'
-        thumbs.append(f'<div class="{cls}" data-src="{attr(src)}" data-alt="{attr(alt)}">\n'
+        state = 'gallery-thumb active" aria-current="true' if i == 0 else 'gallery-thumb'
+        thumbs.append(f'<button type="button" class="{state}" data-src="{attr(src)}" data-alt="{attr(alt)}">\n'
                       + indent(picture(src, alt, 'loading="lazy" decoding="async"'), 2)
-                      + '\n</div>')
+                      + '\n</button>')
     first_src, first_alt = items[0]
     return {
         'first': {'src': first_src, 'alt': first_alt},
