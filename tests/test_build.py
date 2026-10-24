@@ -189,6 +189,13 @@ class BuildTest(unittest.TestCase):
                       'data-src="assets/inside/kitchen.jpg"', html)
         self.assertEqual(html.count('aria-current="true"'), 1)
 
+    def test_contact_form_messages_reach_screen_readers(self):
+        build.build(self.root, self.out)
+        html = self.page('contact')
+        self.assertIn('id="form-feedback" class="form-feedback" role="status" aria-live="polite"', html)
+        self.assertIn('name="name" autocomplete="name"', html)
+        self.assertIn('name="email" autocomplete="email"', html)
+
     def test_contact_form_without_formspree_falls_back_to_email(self):
         build.build(self.root, self.out)
         self.assertIn('<form id="contact-form" action="" method="POST">', self.page('contact'))

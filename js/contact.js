@@ -131,13 +131,35 @@
 
   function showFeedback(text, type) {
     $feedback.textContent = text;
-    $feedback.className = `form-feedback visible ${type}`;
+    $feedback.className = `form-feedback ${type}`;
   }
+
+  // The message alone says what is wrong but not where. The field is marked
+  // invalid, takes focus and is described by the message, so a screen reader
+  // reads the label and the problem together.
+  const $checked = [$name, $email, $message];
+
+  function rejectField($field, text) {
+    showFeedback(text, 'error');
+    $field.setAttribute('aria-invalid', 'true');
+    $field.setAttribute('aria-describedby', 'form-feedback');
+    $field.focus();
+  }
+
+  function clearInvalid($field) {
+    $field.removeAttribute('aria-invalid');
+    $field.removeAttribute('aria-describedby');
+  }
+
+  $checked.forEach(function ($field) {
+    $field.addEventListener('input', function () { clearInvalid($field); });
+  });
 
   $form.addEventListener('submit', function (e) {
     e.preventDefault();
 
     const formData = new FormData($form);
+    $checked.forEach(clearInvalid);
 
     // ── Basic validation ──
     const name = formData.get('name');
@@ -145,22 +167,22 @@
     const message = formData.get('message');
 
     if (!name || name.trim().length < 2) {
-      showFeedback(T('errName'), 'error');
+      rejectField($name, T('errName'));
       return;
     }
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      showFeedback(T('errEmail'), 'error');
+      rejectField($email, T('errEmail'));
       return;
     }
 
     if (!message || message.trim().length < 10) {
-      showFeedback(T('errMessage'), 'error');
+      rejectField($message, T('errMessage'));
       return;
     }
 
     if (message.length > 5000) {
-      showFeedback(T('errTooLong'), 'error');
+      rejectField($message, T('errTooLong'));
       return;
     }
 

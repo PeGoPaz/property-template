@@ -994,11 +994,13 @@ main {
   border-radius: 8px;
   font-size: 0.9rem;
   text-align: center;
-  display: none;
 }
 
-.form-feedback.visible {
-  display: block;
+/* Collapsed rather than display: none while empty. It is a live region, and
+   one that appears together with its text is often not read out at all. */
+.form-feedback:empty {
+  margin: 0;
+  padding: 0;
 }
 
 .form-feedback.success {
@@ -2064,6 +2066,13 @@ main {
   background: var(--color-bg);
   border-color: var(--color-border);
   color: var(--color-text);
+}
+
+/* After the dark theme's field colours and the focus style, so a field the
+   form rejected stays red in both themes, focused or not. */
+.form-field input[aria-invalid="true"],
+.form-field textarea[aria-invalid="true"] {
+  border-color: var(--color-error);
 }
 
 /* ---------- Dark: booking message (no type) ---------- */
