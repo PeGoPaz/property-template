@@ -19,6 +19,7 @@ scripts that use only the standard library.
 - Structured data (schema.org `LodgingBusiness`) with the price range and
   rating worked out from the seasons and reviews
 - `sitemap.xml` listing every page in every language, and `robots.txt`
+- A 404 page that works from any address, in every language
 - Light and dark theme
 - Photos served as AVIF and WebP with a JPEG fallback
 
@@ -33,7 +34,11 @@ scripts that use only the standard library.
 3. Put your photos in `assets/`; each placeholder is labelled with the size its
    spot expects. Then regenerate the AVIF and WebP versions (see [Photos](#photos)).
 4. Write the text in `content/<lang>.json` and the reviews in `reviews.json`.
-5. Run `python3 scripts/build.py --serve` and fix whatever it reports.
+5. Run `python3 scripts/build.py --serve` and fix whatever it reports. Errors
+   stop the build; warnings list what is still the template's own, such as the
+   `example.com` address, social links that point at no profile, and
+   placeholder photos (recognised by `scripts/placeholders.txt`). In GitHub
+   Actions they appear on the run's summary page.
 6. Push, and switch on deployment as described under [Deploy](#deploy).
 
 Needs Python 3 (CI runs 3.12) and nothing else to build. Node.js is only used to

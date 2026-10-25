@@ -156,7 +156,7 @@ class BuildTest(unittest.TestCase):
     def test_builds_every_page_in_every_language_with_nothing_left_unfilled(self):
         self.assertEqual(build.build(self.root, self.out),
                          ['index.html', 'info.html', 'reviews.html', 'contact.html',
-                          'it/index.html', 'it/info.html', 'it/reviews.html', 'it/contact.html'])
+                          'it/index.html', 'it/info.html', 'it/reviews.html', 'it/contact.html', '404.html'])
         for page in ('index', 'info', 'reviews', 'contact', 'it/index', 'it/info', 'it/reviews', 'it/contact'):
             html = self.page(page)
             self.assertNotIn('{{', html, page)
@@ -188,6 +188,37 @@ class BuildTest(unittest.TestCase):
         self.assertIn('<button type="button" class="gallery-thumb active" aria-current="true" '
                       'data-src="assets/inside/kitchen.jpg"', html)
         self.assertEqual(html.count('aria-current="true"'), 1)
+
+    def test_not_found_page_works_from_any_folder(self):
+        build.build(self.root, self.out)
+        html = self.page('404')
+        self.assertIn('<base href="/">', html)
+        self.assertIn('<meta name="robots" content="noindex">', html)
+        self.assertNotIn('rel="canonical"', html)
+        self.assertIn('<h1>Page not found</h1>', html)
+        self.assertIn('<p class="not-found-other" lang="it">Pagina non trovata. '
+                      '<a href="it/index.html" hreflang="it">Torna alla home</a></p>', html)
+        self.assertRegex(html, r'href="css/styles\.css\?v=[0-9a-f]{10}"')
+        self.assertNotIn('404', (self.out / 'sitemap.xml').read_text())
+
+    def test_not_found_page_on_a_project_site(self):
+        self.edit_property(lambda p: p.update(url='https://someone.github.io/casa'))
+        build.build(self.root, self.out)
+        self.assertIn('<base href="/casa/">', self.page('404'))
+
+    def test_template_leftovers_are_reported(self):
+        prop = json.loads((self.root / 'property.json').read_text())
+        found = build.template_leftovers(prop, self.root)
+        self.assertEqual(len(found), 5)
+        self.assertIn('url is still https://example.com', found[0])
+
+        prop.update(url='https://casa-rossa.it', email='info@casa-rossa.it',
+                    social={'instagram': 'https://www.instagram.com/casarossa'})
+        (self.root / prop['photos']['hero']).write_bytes(b'a real photo')
+        found = build.template_leftovers(prop, self.root)
+        self.assertEqual(len(found), 1)
+        self.assertIn('14 of 15 photos are still the placeholders', found[0])
+        self.assertNotIn('hero.jpg', found[0])
 
     def test_pages_carry_no_inline_styles(self):
         # The CSP (in each page's <meta> and in _headers) allows styles from

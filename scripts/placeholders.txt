@@ -1,0 +1,17 @@
+# The template's placeholder photos, by the hash scripts/build.py uses.
+# A photo still matching one of these is reported when the site is built.
+500f10b4c3  assets/logo.jpg
+d9ca98bcf6  assets/favicon-32.png
+3d24457311  assets/apple-touch-icon.png
+727cb23428  assets/hero.jpg
+a49c2a40e5  assets/exterior.jpg
+c32a22c214  assets/view.jpg
+c1073de0d3  assets/inside/living-room.jpg
+8cb80858b0  assets/inside/kitchen.jpg
+2b4ac5041b  assets/inside/bedroom-1.jpg
+d64103f717  assets/inside/bedroom-2.jpg
+25812b93ec  assets/inside/bathroom.jpg
+cf5d6b1369  assets/inside/terrace.jpg
+712aab5f92  assets/facilities/laundry.jpg
+8a5e7ff48d  assets/facilities/parking.jpg
+5e424c4757  assets/facilities/wifi.jpg

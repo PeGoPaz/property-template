@@ -37,6 +37,7 @@ import argparse
 import hashlib
 import html
 import json
+import os
 import re
 import shutil
 import sys
@@ -44,7 +45,7 @@ from datetime import date, timedelta
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 from markup import BuildError, Markup, attr, indent
 from reviews import check_reviews, reviews_context
@@ -489,6 +490,7 @@ def context_for(prop: dict, reviews: dict, text: dict, root: str) -> dict:
         'maxChildren': prop['booking']['maxGuests'] - 1,
         # An empty action makes js/contact.js fall back to a mailto: link.
         'formAction': f'https://formspree.io/f/{form_id}' if form_id else '',
+        'base': Markup(''),  # only the 404 page needs one
         'social': {
             'header': Markup(indent(social_links(prop), 8)),
             'mobile': Markup(indent(social_links(prop, ' width="20" height="20"'), 12)),
@@ -533,6 +535,37 @@ def sitemap(prop: dict) -> str:
     return '\n'.join(lines) + '\n'
 
 
+def other_languages(prop: dict, texts: dict) -> Markup:
+    """A line per extra language on the 404 page, which GitHub Pages serves in one language only."""
+    lines = []
+    for lang in prop['languages'][1:]:
+        text = texts[lang]['notFound']
+        lines.append(f'<p class="not-found-other" lang="{lang}">{html.escape(text["heading"])}. '
+                     f'<a href="{lang}/index.html" hreflang="{lang}">{html.escape(text["home"])}</a></p>')
+    return Markup(indent('\n'.join(lines), 8))
+
+
+def template_leftovers(prop: dict, root: Path) -> list:
+    """What still comes from the template rather than the property. The site
+    builds with it, but would go live with someone else's address and photos."""
+    found = []
+    if re.search(r'\bexample\.(com|org|net)\b', prop['url']):
+        found.append(f'property.json: url is still {prop["url"]}')
+    if re.search(r'@example\.(com|org|net)$', prop['email']):
+        found.append(f'property.json: email is still {prop["email"]}')
+    for network, link in prop.get('social', {}).items():
+        if not urlparse(link).path.strip('/'):
+            found.append(f'property.json: social.{network} is {link}, not a profile')
+
+    known = root / 'scripts' / 'placeholders.txt'
+    placeholders = {line.split()[0] for line in known.read_text().splitlines() if line.strip()} if known.is_file() else set()
+    photos = list(prop['photos'].values()) + [g['src'] for g in prop['gallery']] + [a['image'] for a in prop['amenities']]
+    left = [p for p in photos if file_hash(root / p) in placeholders]
+    if left:
+        found.append(f'{len(left)} of {len(photos)} photos are still the placeholders: ' + ', '.join(left))
+    return found
+
+
 def robots(prop: dict) -> str:
     return f'User-agent: *\nAllow: /\n\nSitemap: {prop["url"].rstrip("/")}/sitemap.xml\n'
 
@@ -567,6 +600,17 @@ def build(root: Path = ROOT, out: Path = OUT) -> list:
     default = prop['languages'][0]
     hero_size = jpeg_size(root / prop['photos']['hero'])
     written = []
+    def write_page(path: str, source: str, page_context: dict, name: str) -> None:
+        for partial_name, partial_source in partials.items():
+            page_context[partial_name] = Markup(render(partial_source, page_context, f'templates/_{partial_name}.html'))
+        if not page_context['reviews']['count']:
+            page_context['home_reviews'] = Markup('')  # no "Loved by our guests" with nothing to show
+        (out / path).parent.mkdir(parents=True, exist_ok=True)
+        page_html = render(source, page_context, f'templates/{name}.html')
+        (out / path).write_text(fingerprint(page_html, (out / path).parent, f'templates/{name}.html'),
+                                encoding='utf-8')
+        written.append(path)
+
     for lang, text in texts.items():
         root_path = '' if lang == default else '../'
         (out / 'js' / f'strings.{lang}.js').write_text(strings_script(text), encoding='utf-8')
@@ -579,17 +623,21 @@ def build(root: Path = ROOT, out: Path = OUT) -> list:
                                 structuredData=(structured_data(prop, text, lang, context['reviews'])
                                                 if page == 'index' else Markup('')),
                                 languageSwitch=language_switch(prop, text, page, lang, root_path))
-            for name, source in partials.items():
-                page_context[name] = Markup(render(source, page_context, f'templates/_{name}.html'))
-            if not context['reviews']['count']:
-                page_context['home_reviews'] = Markup('')  # no "Loved by our guests" with nothing to show
+            write_page(page_path(page, lang, default), sources[page], page_context, page)
 
-            path = page_path(page, lang, default)
-            (out / path).parent.mkdir(parents=True, exist_ok=True)
-            page_html = render(sources[page], page_context, f'templates/{page}.html')
-            (out / path).write_text(fingerprint(page_html, (out / path).parent, f'templates/{page}.html'),
-                                    encoding='utf-8')
-            written.append(path)
+    # GitHub Pages answers every missing address with this one file, whatever
+    # folder was asked for, so <base> pins its links to the site's root. It is
+    # in the default language, with a line for each of the others.
+    text = texts[default]
+    site_root = urlparse(prop['url']).path.rstrip('/') + '/'
+    write_page('404.html', (templates / '404.html').read_text(encoding='utf-8'),
+               dict(context_for(prop, reviews, text, ''), page=text['pages']['notFound'],
+                    base=Markup(f'  <base href="{attr(site_root)}">'),
+                    alternates=Markup('  <meta name="robots" content="noindex">'),
+                    sharing=Markup(''), structuredData=Markup(''),
+                    languageSwitch=language_switch(prop, text, 'index', default, ''),
+                    otherLanguages=other_languages(prop, texts)),
+               '404')
 
     (out / 'sitemap.xml').write_text(sitemap(prop), encoding='utf-8')
     (out / 'robots.txt').write_text(robots(prop), encoding='utf-8')
@@ -634,6 +682,10 @@ def main() -> int:
         print(f'build failed: {e}', file=sys.stderr)
         return 1
     print(f'Built {len(pages)} pages into {OUT.relative_to(ROOT)}/')
+    for leftover in template_leftovers(load_json(ROOT / 'property.json', ROOT), ROOT):
+        # In GitHub Actions, ::warning:: puts it on the run's summary page.
+        prefix = '::warning::' if os.environ.get('GITHUB_ACTIONS') else 'warning: '
+        print(prefix + leftover, file=sys.stderr)
 
     if args.serve:
         serve(args.port)

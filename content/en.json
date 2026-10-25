@@ -18,6 +18,10 @@
     "contact": {
       "title": "Contact - {name}",
       "description": "Contact {name} to book your stay on Lake Garda. Send us a direct inquiry."
+    },
+    "notFound": {
+      "title": "Page not found - {name}",
+      "description": "This page does not exist on the {name} website."
     }
   },
   "nav": {
@@ -123,10 +127,36 @@
     "subject": "New Booking Inquiry - {name}",
     "send": "Send Inquiry"
   },
+  "notFound": {
+    "heading": "Page not found",
+    "text": "The page you were looking for is not here. It may have moved, or the link may be wrong.",
+    "home": "Back to the home page"
+  },
   "ui": {
     "locale": "en-US",
-    "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-    "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "months": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ],
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun"
+    ],
     "night": "night",
     "nights": "nights",
     "guest": "guest",

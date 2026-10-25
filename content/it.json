@@ -18,6 +18,10 @@
     "contact": {
       "title": "Contatti - {name}",
       "description": "Contatta {name} per prenotare il tuo soggiorno sul Lago di Garda. Inviaci una richiesta diretta."
+    },
+    "notFound": {
+      "title": "Pagina non trovata - {name}",
+      "description": "Questa pagina non esiste sul sito di {name}."
     }
   },
   "nav": {
@@ -123,10 +127,36 @@
     "subject": "Nuova richiesta di prenotazione - {name}",
     "send": "Invia richiesta"
   },
+  "notFound": {
+    "heading": "Pagina non trovata",
+    "text": "La pagina che cercavi non è qui. Potrebbe essere stata spostata, oppure il link è sbagliato.",
+    "home": "Torna alla home"
+  },
   "ui": {
     "locale": "it-IT",
-    "months": ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"],
-    "days": ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
+    "months": [
+      "Gennaio",
+      "Febbraio",
+      "Marzo",
+      "Aprile",
+      "Maggio",
+      "Giugno",
+      "Luglio",
+      "Agosto",
+      "Settembre",
+      "Ottobre",
+      "Novembre",
+      "Dicembre"
+    ],
+    "days": [
+      "Lun",
+      "Mar",
+      "Mer",
+      "Gio",
+      "Ven",
+      "Sab",
+      "Dom"
+    ],
     "night": "notte",
     "nights": "notti",
     "guest": "ospite",
