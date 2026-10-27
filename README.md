@@ -23,6 +23,21 @@ scripts that use only the standard library.
 - Light and dark theme
 - Photos served as AVIF and WebP with a JPEG fallback
 
+## What it looks like
+
+The example site as the template ships, placeholder photos included: each one
+is labelled with its file name and the size its spot expects.
+
+![The home page: the hero photo, the menu, the theme and language switches](docs/screenshots/home.png)
+
+| Booking, light theme | Booking, dark theme |
+|---|---|
+| ![The availability calendar with three nights picked and the total price](docs/screenshots/booking-light.png) | ![The same in the dark theme](docs/screenshots/booking-dark.png) |
+
+| Gallery | Italian, on a phone |
+|---|---|
+| ![The gallery slideshow with its thumbnails](docs/screenshots/gallery.png) | <img src="docs/screenshots/phone-it.png" width="260" alt="The Italian home page on a phone, dark theme"> |
+
 ## Quick start
 
 1. Click **Use this template** at the top of the repository on GitHub, then
