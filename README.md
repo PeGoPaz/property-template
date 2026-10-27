@@ -57,7 +57,8 @@ is labelled with its file name and the size its spot expects.
 6. Push, and switch on deployment as described under [Deploy](#deploy).
 
 Needs Python 3 (CI runs 3.12) and nothing else to build. Node.js is only used to
-run the JavaScript tests, and regenerating photo formats needs a Mac.
+run the JavaScript tests, and regenerating photo formats needs `avifenc` and
+`cwebp`.
 
 ```
 property.json          the property: name, address, languages, prices, photos
@@ -70,7 +71,7 @@ scripts/
   build.py             builds _site/ from all of the above
   reviews.py           validates and renders the reviews
   sync_availability.py fetches the iCal feeds into availability.json
-  build_images.py      writes AVIF and WebP next to every JPEG (macOS)
+  build_images.py      writes AVIF and WebP next to every JPEG
 tests/                 Python unittest and node:test suites
 ```
 
@@ -215,13 +216,13 @@ it in both places; a test fails if they disagree.
 
 Each placeholder in `assets/` is labelled with its file name and size. Replace
 the JPEGs with your own photos, then regenerate the AVIF and WebP versions. It
-runs on macOS, which provides the AVIF encoder, and needs `cwebp`
-(`brew install webp`) and the Xcode command line tools:
+needs `avifenc` and `cwebp` (`brew install libavif webp`, or the `libavif-bin`
+and `webp` packages on Debian and Ubuntu):
 
 ```bash
 python3 scripts/build_images.py
 ```
 
-Only files that are newer than their AVIF and WebP are re-encoded. A photo with
-an odd width or height loses its last row or column in the AVIF, because
-Chrome shows an odd-sized AVIF from macOS's encoder as a blank image.
+Only files that are newer than their AVIF and WebP are re-encoded. The AVIF
+comes from libavif rather than macOS's built-in encoder, which splits large
+photos into a grid of tiles that Firefox cannot display.
