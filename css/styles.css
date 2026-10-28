@@ -590,17 +590,16 @@ main {
   cursor: not-allowed;
 }
 
-.cal-cell.past {
-  color: rgba(156, 163, 175, 0.5);
+/* Unavailable days are told apart by having no background, not by fading
+   the number: it stays readable, at the 4.5:1 contrast WCAG asks of text. */
+.cal-cell.past,
+.cal-cell.closed {
+  color: var(--color-muted);
 }
 
 /* Warm enough to read as taken, quiet enough not to look like an error. */
 .cal-cell.blocked {
-  color: rgba(171, 118, 116, 0.85);
-}
-
-.cal-cell.closed {
-  color: rgba(100, 116, 139, 0.45);
+  color: #a15c58;
 }
 
 .cal-cell.available {
@@ -1850,16 +1849,10 @@ main {
   background: rgba(16, 185, 129, 0.22);
 }
 [data-theme="dark"] .cal-cell.blocked {
-  color: rgba(208, 148, 145, 0.8);
+  color: #e5a3a0;
 }
 [data-theme="dark"] .cal-cell.in-range {
   background: rgba(212, 165, 116, 0.15);
-}
-[data-theme="dark"] .cal-cell.closed {
-  color: rgba(148, 163, 184, 0.45);
-}
-[data-theme="dark"] .cal-cell.past {
-  color: rgba(148, 163, 184, 0.4);
 }
 [data-theme="dark"] .cal-cell.checkout-eligible {
   color: var(--color-accent-light);
@@ -1899,6 +1892,11 @@ main {
 [data-theme="dark"] .booking-message.warning {
   background: rgba(251, 191, 36, 0.1);
   border-color: rgba(251, 191, 36, 0.3);
+}
+
+/* White on the gold accent is 2.2:1; the dark background colour is 8:1. */
+[data-theme="dark"] .btn-primary {
+  color: #0f172a;
 }
 
 [data-theme="dark"] .btn-primary:disabled {

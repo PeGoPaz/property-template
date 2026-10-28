@@ -480,12 +480,25 @@ class BuildTest(unittest.TestCase):
         with self.assertRaisesRegex(BuildError, 'url must be the address'):
             build.build(self.root, self.out)
 
+    def test_scripts_wait_for_the_page_except_the_theme(self):
+        # theme-init.js runs before the first paint so the page never flashes
+        # the wrong theme; everything else is deferred.
+        build.build(self.root, self.out)
+        for page in ('index', 'info', 'reviews', 'contact', '404', 'it/info'):
+            html = self.page(page)
+            head, body = html.split('</head>')
+            self.assertRegex(head, r'<script src="(\.\./)?js/theme-init\.js\?v=[0-9a-f]+"></script>', page)
+            scripts = re.findall(r'<script src="[^"]+"[^>]*>', body)
+            self.assertTrue(scripts, page)
+            for tag in scripts:
+                self.assertIn(' defer>', tag, f'{page}: {tag}')
+
     def test_own_scripts_and_styles_carry_a_content_hash(self):
         build.build(self.root, self.out)
         html = self.page('index')
         booking = hashlib.sha256((self.out / 'js' / 'booking.js').read_bytes()).hexdigest()[:10]
-        self.assertIn(f'<script src="js/booking.js?v={booking}"></script>', html)
-        self.assertIn(f'<script src="../js/booking.js?v={booking}"></script>', self.page('it/index'))
+        self.assertIn(f'<script src="js/booking.js?v={booking}" defer></script>', html)
+        self.assertIn(f'<script src="../js/booking.js?v={booking}" defer></script>', self.page('it/index'))
         self.assertRegex(html, r'<link rel="stylesheet" href="css/styles.css\?v=[0-9a-f]{10}">')
         for page in ('index', 'info', 'reviews', 'contact', 'it/contact'):
             self.assertNotRegex(self.page(page), r'(src|href)="(\.\./)*(js|css)/[^"?]+"', page)
