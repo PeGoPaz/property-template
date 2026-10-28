@@ -9,8 +9,8 @@
   <main>
     <section class="contact-hero">
       <picture>
-        <source type="image/avif" srcset="{{ photos.view | avif }}">
-        <source type="image/webp" srcset="{{ photos.view | webp }}">
+        <source type="image/avif" srcset="{{ photos.view | avif }}" sizes="100vw">
+        <source type="image/webp" srcset="{{ photos.view | webp }}" sizes="100vw">
         <img src="{{ photos.view }}" alt="{{ t.photos.view }}" class="contact-hero-image" fetchpriority="high">
       </picture>
       <div class="contact-hero-overlay">

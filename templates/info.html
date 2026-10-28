@@ -19,15 +19,15 @@
     <section class="info-split" data-reveal-group>
       <div class="info-split-card">
         <picture>
-          <source type="image/avif" srcset="{{ photos.exterior | avif }}">
-          <source type="image/webp" srcset="{{ photos.exterior | webp }}">
+          <source type="image/avif" srcset="{{ photos.exterior | avif }}" sizes="(max-width: 768px) 100vw, 50vw">
+          <source type="image/webp" srcset="{{ photos.exterior | webp }}" sizes="(max-width: 768px) 100vw, 50vw">
           <img src="{{ photos.exterior }}" alt="{{ t.photos.exterior }}" loading="lazy" decoding="async">
         </picture>
       </div>
       <div class="info-split-card">
         <picture>
-          <source type="image/avif" srcset="{{ photos.view | avif }}">
-          <source type="image/webp" srcset="{{ photos.view | webp }}">
+          <source type="image/avif" srcset="{{ photos.view | avif }}" sizes="(max-width: 768px) 100vw, 50vw">
+          <source type="image/webp" srcset="{{ photos.view | webp }}" sizes="(max-width: 768px) 100vw, 50vw">
           <img src="{{ photos.view }}" alt="{{ t.photos.view }}" loading="lazy" decoding="async">
         </picture>
       </div>
@@ -42,8 +42,8 @@
         <div class="gallery-slideshow" id="gallery-slideshow">
           <div class="gallery-main">
             <picture>
-              <source type="image/avif" srcset="{{ gallery.first.src | avif }}">
-              <source type="image/webp" srcset="{{ gallery.first.src | webp }}">
+              <source type="image/avif" srcset="{{ gallery.first.src | avif }}" sizes="(max-width: 1280px) 100vw, 1280px">
+              <source type="image/webp" srcset="{{ gallery.first.src | webp }}" sizes="(max-width: 1280px) 100vw, 1280px">
               <img id="gallery-main-img" src="{{ gallery.first.src }}" alt="{{ gallery.first.alt }}" class="gallery-main-img" loading="lazy" decoding="async">
             </picture>
             <button class="gallery-nav prev" aria-label="{{ t.info.previousImage }}">

@@ -9,8 +9,8 @@
   <main>
     <section class="hero">
       <picture>
-        <source type="image/avif" srcset="{{ photos.hero | avif }}">
-        <source type="image/webp" srcset="{{ photos.hero | webp }}">
+        <source type="image/avif" srcset="{{ photos.hero | avif }}" sizes="100vw">
+        <source type="image/webp" srcset="{{ photos.hero | webp }}" sizes="100vw">
         <img src="{{ photos.hero }}" alt="{{ t.home.heroAlt }}" class="hero-image" fetchpriority="high">
       </picture>
       <div class="hero-overlay">
@@ -66,15 +66,15 @@
         <div class="image-grid" data-reveal-group>
           <div class="image-card">
             <picture>
-              <source type="image/avif" srcset="{{ photos.exterior | avif }}">
-              <source type="image/webp" srcset="{{ photos.exterior | webp }}">
+              <source type="image/avif" srcset="{{ photos.exterior | avif }}" sizes="(max-width: 768px) 100vw, 550px">
+              <source type="image/webp" srcset="{{ photos.exterior | webp }}" sizes="(max-width: 768px) 100vw, 550px">
               <img src="{{ photos.exterior }}" alt="{{ t.photos.exterior }}" loading="lazy" decoding="async">
             </picture>
           </div>
           <div class="image-card">
             <picture>
-              <source type="image/avif" srcset="{{ photos.view | avif }}">
-              <source type="image/webp" srcset="{{ photos.view | webp }}">
+              <source type="image/avif" srcset="{{ photos.view | avif }}" sizes="(max-width: 768px) 100vw, 550px">
+              <source type="image/webp" srcset="{{ photos.view | webp }}" sizes="(max-width: 768px) 100vw, 550px">
               <img src="{{ photos.view }}" alt="{{ t.photos.view }}" loading="lazy" decoding="async">
             </picture>
           </div>

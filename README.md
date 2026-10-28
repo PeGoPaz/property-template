@@ -21,7 +21,8 @@ scripts that use only the standard library.
 - `sitemap.xml` listing every page in every language, and `robots.txt`
 - A 404 page that works from any address, in every language
 - Light and dark theme
-- Photos served as AVIF and WebP with a JPEG fallback
+- Photos served as AVIF and WebP with a JPEG fallback, in several widths, so a
+  phone downloads a copy sized for its screen
 
 ## What it looks like
 
@@ -223,6 +224,9 @@ and `webp` packages on Debian and Ubuntu):
 python3 scripts/build_images.py
 ```
 
-Only files that are newer than their AVIF and WebP are re-encoded. The AVIF
-comes from libavif rather than macOS's built-in encoder, which splits large
-photos into a grid of tiles that Firefox cannot display.
+Each photo is also written 640 and 1280 px wide (when it is wider than that),
+and every `<picture>` lists all of them with their widths, so a phone takes a
+copy sized for its screen instead of the full photo. Only files that are newer
+than their AVIF and WebP are re-encoded. The AVIF comes from libavif rather
+than macOS's built-in encoder, which splits large photos into a grid of tiles
+that Firefox cannot display.

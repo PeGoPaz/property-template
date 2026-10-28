@@ -18,18 +18,17 @@
   const totalImages = thumbs.length;
 
   // <source> wins over img.src, so the whole <picture> has to be updated.
-  // Sibling formats share the JPEG's path — see scripts/build_images.py.
+  // Each thumbnail carries the photo's srcsets, every size it comes in, which
+  // scripts/build.py writes; the main image's sizes stay as they are.
   const picture = mainImg.closest('picture');
 
-  function showImage(jpgPath) {
+  function showImage(thumb) {
     if (picture) {
-      const base = jpgPath.replace(/\.jpg$/, '');
       picture.querySelectorAll('source').forEach(source => {
-        const ext = source.type === 'image/avif' ? '.avif' : '.webp';
-        source.srcset = base + ext;
+        source.srcset = source.type === 'image/avif' ? thumb.dataset.avif : thumb.dataset.webp;
       });
     }
-    mainImg.src = jpgPath;
+    mainImg.src = thumb.dataset.src;
   }
 
   /**
@@ -59,7 +58,7 @@
     pendingSwap = setTimeout(() => {
       pendingSwap = null;
       const thumb = thumbs[index];
-      showImage(thumb.dataset.src);
+      showImage(thumb);
       mainImg.alt = thumb.dataset.alt;
       mainImg.classList.remove('fade');
 

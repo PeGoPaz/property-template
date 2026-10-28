@@ -220,6 +220,23 @@ class BuildTest(unittest.TestCase):
         self.assertIn('14 of 15 photos are still the placeholders', found[0])
         self.assertNotIn('hero.jpg', found[0])
 
+    def test_photos_offer_every_size_on_disk(self):
+        build.build(self.root, self.out)
+        self.assertIn('srcset="assets/hero-640.avif 640w, assets/hero-1280.avif 1280w, '
+                      'assets/hero.avif 1920w" sizes="100vw"', self.page('index'))
+        # Translations sit one folder down; the 1200 px photo has no 1280 copy.
+        info = self.page('it/info')
+        self.assertIn('data-webp="../assets/inside/kitchen-640.webp 640w, ../assets/inside/kitchen-1280.webp 1280w, '
+                      '../assets/inside/kitchen.webp 1600w"', info)
+        self.assertIn('srcset="../assets/facilities/wifi-640.avif 640w, ../assets/facilities/wifi.avif 1200w"', info)
+        self.assertEqual(info.count('sizes="120px"'), 2 * 6, 'both formats of each of the six thumbnails')
+
+    def test_photos_without_narrower_copies_offer_their_own_size(self):
+        for copy in (self.root / 'assets').glob('hero-*.*'):
+            copy.unlink()
+        build.build(self.root, self.out)
+        self.assertIn('srcset="assets/hero.avif 1920w" sizes="100vw"', self.page('index'))
+
     def test_pages_carry_no_inline_styles(self):
         # The CSP (in each page's <meta> and in _headers) allows styles from
         # the stylesheet only, so a style="" attribute would be ignored.

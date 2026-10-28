@@ -68,10 +68,46 @@ STANDALONE = re.compile(r'^[ \t]*(\{\{[^{}]*\}\})[ \t]*\n', re.M)
 # src="js/booking.js", href="../css/styles.css": the site's own scripts and styles.
 OWN_ASSET = re.compile(r'\b(src|href)="((?:\.\./)*(?:js|css)/[^"?#]+)"')
 
-FILTERS = {
-    'avif': lambda v: re.sub(r'\.jpg$', '.avif', v),
-    'webp': lambda v: re.sub(r'\.jpg$', '.webp', v),
-}
+# Narrower copies scripts/build_images.py writes of every photo wider than them.
+VARIANT_WIDTHS = (640, 1280)
+
+
+def variant_path(src: Path, width: int, suffix: str) -> Path:
+    """assets/hero.jpg -> assets/hero-640.avif"""
+    return src.with_name(f'{src.stem}-{width}{suffix}')
+
+
+def photo_srcsets(root: Path, paths) -> dict:
+    """For each photo, its AVIF and WebP srcset: every size on disk, with its width."""
+    srcsets = {}
+    for path in paths:
+        jpg = root / path
+        try:
+            width = jpeg_size(jpg)[0]
+        except BuildError:
+            continue  # its size is unknown: the plain file, as | avif / | webp fall back to
+        srcsets[path] = {}
+        for fmt in ('avif', 'webp'):
+            entries = [f'{Path(path).with_name(variant_path(jpg, w, "." + fmt).name).as_posix()} {w}w'
+                       for w in VARIANT_WIDTHS if w < width and variant_path(jpg, w, '.' + fmt).is_file()]
+            entries.append(f'{Path(path).with_suffix("." + fmt).as_posix()} {width}w')
+            srcsets[path][fmt] = entries
+    return srcsets
+
+
+def image_format(fmt: str):
+    """`| avif`, `| webp`: a photo's srcset in that format, from context['srcsets'].
+    A path the build knows nothing about just has its extension swapped."""
+    def swap(value: str, context: dict) -> str:
+        prefix, path = re.match(r'((?:\.\./)*)(.*)', value).groups()
+        entries = context.get('srcsets', {}).get(path)
+        if not entries:
+            return re.sub(r'\.jpg$', '.' + fmt, value)
+        return ', '.join(prefix + entry for entry in entries[fmt])
+    return swap
+
+
+FILTERS = {'avif': image_format('avif'), 'webp': image_format('webp')}
 
 
 # ────────────────────────────────────────────────
@@ -99,7 +135,7 @@ def render(template: str, context: dict, name: str = 'template') -> str:
         if filter_name:
             if filter_name not in FILTERS:
                 raise BuildError(f'{name}: unknown filter | {filter_name}')
-            value = FILTERS[filter_name](str(value))
+            value = FILTERS[filter_name](str(value), context)
         if isinstance(value, Markup):
             return value
         return html.escape(str(value))
@@ -128,11 +164,14 @@ def fill_vars(value, variables: dict):
 # Fragments
 # ────────────────────────────────────────────────
 
-def picture(src: str, alt: str, extra: str = '') -> str:
+def picture(src: str, alt: str, extra: str = '', sizes: str = '', srcsets: dict | None = None) -> str:
+    """sizes tells the browser how wide the photo shows, so it can pick from the srcset."""
     extra = f' {extra}' if extra else ''
+    size_attr = f' sizes="{attr(sizes)}"' if sizes else ''
+    context = {'srcsets': srcsets or {}}
     return (f'<picture>\n'
-            f'  <source type="image/avif" srcset="{attr(FILTERS["avif"](src))}">\n'
-            f'  <source type="image/webp" srcset="{attr(FILTERS["webp"](src))}">\n'
+            f'  <source type="image/avif" srcset="{attr(FILTERS["avif"](src, context))}"{size_attr}>\n'
+            f'  <source type="image/webp" srcset="{attr(FILTERS["webp"](src, context))}"{size_attr}>\n'
             f'  <img src="{attr(src)}" alt="{attr(alt)}"{extra}>\n'
             f'</picture>')
 
@@ -167,15 +206,19 @@ def text_for(text: dict, section: str, key: str):
         raise BuildError(f'content/{text["lang"]}.json has no {section} text for "{key}"') from None
 
 
-def gallery(prop: dict, text: dict, root: str) -> dict:
+def gallery(prop: dict, text: dict, root: str, srcsets: dict) -> dict:
     items = [(root + g['src'], text_for(text, 'gallery', g['id'])) for g in prop['gallery']]
     thumbs = []
     # Buttons, so a keyboard can reach every photo; the image's alt text is
     # the button's name, and aria-current marks the one on show.
     for i, (src, alt) in enumerate(items):
         state = 'gallery-thumb active" aria-current="true' if i == 0 else 'gallery-thumb'
-        thumbs.append(f'<button type="button" class="{state}" data-src="{attr(src)}" data-alt="{attr(alt)}">\n'
-                      + indent(picture(src, alt, 'loading="lazy" decoding="async"'), 2)
+        # data-avif and data-webp are the full srcsets js/gallery.js puts on
+        # the main image when this photo is chosen.
+        sets = {fmt: FILTERS[fmt](src, {'srcsets': srcsets}) for fmt in ('avif', 'webp')}
+        thumbs.append(f'<button type="button" class="{state}" data-src="{attr(src)}" data-alt="{attr(alt)}" '
+                      f'data-avif="{attr(sets["avif"])}" data-webp="{attr(sets["webp"])}">\n'
+                      + indent(picture(src, alt, 'loading="lazy" decoding="async"', '120px', srcsets), 2)
                       + '\n</button>')
     first_src, first_alt = items[0]
     return {
@@ -184,13 +227,14 @@ def gallery(prop: dict, text: dict, root: str) -> dict:
     }
 
 
-def amenities(prop: dict, text: dict, root: str) -> Markup:
+def amenities(prop: dict, text: dict, root: str, srcsets: dict) -> Markup:
     cards = []
     for a in prop['amenities']:
         t = text_for(text, 'amenities', a['id'])
         cards.append(f'<div class="amenity-card">\n'
                      f'  <div class="amenity-image">\n'
-                     + indent(picture(root + a['image'], t['alt'], 'loading="lazy" decoding="async"'), 4)
+                     + indent(picture(root + a['image'], t['alt'], 'loading="lazy" decoding="async"',
+                                      '(max-width: 768px) 100vw, 33vw', srcsets), 4)
                      + f'\n  </div>\n'
                      f'  <div class="amenity-body">\n'
                      f'    <h3>{html.escape(t["title"])}</h3>\n'
@@ -478,7 +522,7 @@ def load_content(root: Path, prop: dict) -> dict:
     return {lang: dict(fill_vars(text, variables), lang=lang) for lang, text in raw.items()}
 
 
-def context_for(prop: dict, reviews: dict, text: dict, root: str) -> dict:
+def context_for(prop: dict, reviews: dict, text: dict, root: str, srcsets: dict) -> dict:
     form_id = prop.get('formspreeId', '')
     return {
         'p': prop,
@@ -496,8 +540,9 @@ def context_for(prop: dict, reviews: dict, text: dict, root: str) -> dict:
             'mobile': Markup(indent(social_links(prop, ' width="20" height="20"'), 12)),
             'footer': Markup(indent(social_links(prop), 10)),
         },
-        'gallery': gallery(prop, text, root),
-        'amenities': amenities(prop, text, root),
+        'srcsets': srcsets,
+        'gallery': gallery(prop, text, root, srcsets),
+        'amenities': amenities(prop, text, root, srcsets),
         'reviews': reviews_context(reviews, text, text['lang']),
     }
 
@@ -597,6 +642,10 @@ def build(root: Path = ROOT, out: Path = OUT) -> list:
             shutil.copy2(src, out / item)
     (out / 'js' / 'property.js').write_text(property_script(prop), encoding='utf-8')
 
+    photos = [p for p in prop['photos'].values() if p.endswith('.jpg')]
+    photos += [g['src'] for g in prop['gallery']] + [a['image'] for a in prop['amenities']]
+    srcsets = photo_srcsets(root, dict.fromkeys(photos))
+
     default = prop['languages'][0]
     hero_size = jpeg_size(root / prop['photos']['hero'])
     written = []
@@ -614,7 +663,7 @@ def build(root: Path = ROOT, out: Path = OUT) -> list:
     for lang, text in texts.items():
         root_path = '' if lang == default else '../'
         (out / 'js' / f'strings.{lang}.js').write_text(strings_script(text), encoding='utf-8')
-        context = context_for(prop, reviews, text, root_path)
+        context = context_for(prop, reviews, text, root_path, srcsets)
 
         for page in PAGES:
             page_context = dict(context, page=text['pages'][page],
@@ -631,7 +680,7 @@ def build(root: Path = ROOT, out: Path = OUT) -> list:
     text = texts[default]
     site_root = urlparse(prop['url']).path.rstrip('/') + '/'
     write_page('404.html', (templates / '404.html').read_text(encoding='utf-8'),
-               dict(context_for(prop, reviews, text, ''), page=text['pages']['notFound'],
+               dict(context_for(prop, reviews, text, '', srcsets), page=text['pages']['notFound'],
                     base=Markup(f'  <base href="{attr(site_root)}">'),
                     alternates=Markup('  <meta name="robots" content="noindex">'),
                     sharing=Markup(''), structuredData=Markup(''),
