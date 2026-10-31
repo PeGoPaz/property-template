@@ -522,6 +522,15 @@ class BuildTest(unittest.TestCase):
         with self.assertRaisesRegex(BuildError, 'templates/info.html links to js/missing.js, which the built site does not have'):
             build.build(self.root, self.out)
 
+    def test_link_that_leads_nowhere_stops_the_build(self):
+        path = self.root / 'templates' / 'info.html'
+        path.write_text(path.read_text().replace('</main>', '<a href="{{ root }}rates.html">Rates</a>\n</main>'))
+        with self.assertRaises(BuildError) as raised:
+            build.build(self.root, self.out)
+        message = str(raised.exception)
+        self.assertRegex(message, r'_site/info\.html:\d+: href rates\.html leads to rates\.html, which the site does not have')
+        self.assertRegex(message, r'_site/it/info\.html:\d+: href \.\./rates\.html leads to rates\.html')
+
     def test_reviews_are_in_the_html(self):
         build.build(self.root, self.out)
         home = self.page('index')

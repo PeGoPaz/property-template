@@ -27,7 +27,9 @@ property.json.
 Every link a page makes to the site's own CSS or JavaScript gets ?v=<hash of
 the file> appended, so after a deploy browsers fetch the new files instead of
 running a cached old script against new pages. A link to a file the site does
-not have fails the build.
+not have fails the build. Once every page is written, scripts/links.py checks
+the rest of their links the same way: to pages, photos, #fragments, and the
+elements labels and ARIA attributes point at.
 
   python3 scripts/build.py           build into _site/
   python3 scripts/build.py --serve   build, then serve it on http://localhost:8000
@@ -47,6 +49,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import quote, urlparse
 
+from links import check_links
 from markup import BuildError, Markup, attr, indent
 from reviews import check_reviews, reviews_context
 
@@ -687,6 +690,10 @@ def build(root: Path = ROOT, out: Path = OUT) -> list:
                     languageSwitch=language_switch(prop, text, 'index', default, ''),
                     otherLanguages=other_languages(prop, texts)),
                '404')
+
+    problems = check_links(out, prop['url'], written)
+    if problems:
+        raise BuildError('links that lead nowhere:\n  ' + '\n  '.join(problems))
 
     (out / 'sitemap.xml').write_text(sitemap(prop), encoding='utf-8')
     (out / 'robots.txt').write_text(robots(prop), encoding='utf-8')

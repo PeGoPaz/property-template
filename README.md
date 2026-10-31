@@ -170,7 +170,10 @@ python3 scripts/build.py --serve
 
 builds the site into `_site/` and serves it on http://localhost:8000. A typo in
 a template placeholder, a photo that does not exist or a gallery photo without
-a caption stops the build with a message saying which.
+a caption stops the build with a message saying which. So does a link on a
+built page that leads nowhere: to a page or photo the site does not have, to an
+`#id` its page lacks, or a label or ARIA attribute naming a missing element.
+The message gives the page and line in `_site/`.
 
 Links to the site's own CSS and JavaScript get a hash of the file appended
 (`js/booking.js?v=cccefb6a23`). When a file changes, so does its link, and
