@@ -2,6 +2,7 @@
  * Booking engine
  * Handles: date validation, pricing, iCal availability, redirect flow.
  * Rates and stay rules come from js/pricing.js (property.json → booking).
+ * Pure date/pricing/validation logic lives in js/booking-core.js.
  */
 
 (function () {
@@ -12,6 +13,7 @@
   // ──────────────────────────────────────────────
 
   const PRICING = window.SITE_PRICING;
+  const CORE = window.BOOKING_CORE;
 
   const CONFIG = {
     /**
@@ -24,48 +26,12 @@
   };
 
   // ──────────────────────────────────────────────
-  // PRICING
-  // ──────────────────────────────────────────────
-
-  /**
-   * Calculate total price by iterating each individual night.
-   * A "night" is from check-in date D to D+1, priced by D's season.
-   * Returns { total, nights, rateBreakdown[] }
-   */
-  function calculatePrice(checkIn, checkOut) {
-    let total = 0;
-    let nights = 0;
-    const breakdown = [];
-
-    const cursor = new Date(checkIn);
-    while (cursor < checkOut) {
-      const rate = PRICING.rateFor(cursor);
-      if (rate === null) {
-        // Night falls in closed season — invalidate
-        return { total: 0, nights: 0, breakdown: [], closedSeason: true };
-      }
-      total += rate;
-      breakdown.push({
-        date: formatDateISO(cursor),
-        rate: rate,
-      });
-      nights++;
-      cursor.setDate(cursor.getDate() + 1);
-    }
-
-    return { total, nights, breakdown, closedSeason: false };
-  }
-
-  // ──────────────────────────────────────────────
   // DATE UTILITIES
   // ──────────────────────────────────────────────
 
-  function formatDateISO(d) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
+  // Pure date/pricing logic is unit-tested in js/booking-core.js.
+  const parseDate = CORE.parseDate;
+  const nightCount = CORE.nightCount;
 
   // i18n: dictionaries provided by js/i18n.js (must load first).
   // Falls back to English if i18n.js is missing.
@@ -76,22 +42,6 @@
 
   function formatDateHuman(d) {
     return d.toLocaleDateString(LOCALE, { month: 'long', day: 'numeric', year: 'numeric' });
-  }
-
-  function parseDate(str) {
-    if (!str) return null;
-    const parts = str.split('-');
-    return new Date(+parts[0], +parts[1] - 1, +parts[2]);
-  }
-
-  /** True if the night starting on this date falls in a season */
-  function isOperationalDate(date) {
-    return PRICING.rateFor(date) !== null;
-  }
-
-  /** Count nights between two dates */
-  function nightCount(from, to) {
-    return Math.round((to - from) / (1000 * 60 * 60 * 24));
   }
 
   // ──────────────────────────────────────────────
@@ -132,11 +82,6 @@
     blockedDates = set;
     window.blockedDates = blockedDates;
     window.availabilityHasData = true;
-  }
-
-  /** Check if a date is blocked (already booked) */
-  function isBlocked(date) {
-    return blockedDates.has(formatDateISO(date));
   }
 
   // ──────────────────────────────────────────────
@@ -218,6 +163,7 @@
   /**
    * Core validation & pricing logic.
    * Called when calendar selection changes or guest count changes.
+   * The decision tree lives in booking-core.js; this maps its result to the DOM.
    */
   function validate() {
     clearMessage();
@@ -226,148 +172,82 @@
     const checkOutStr = selectedCheckout;
     const adults = parseInt($adults.value, 10) || 0;
     const children = parseInt($children.value, 10) || 0;
-    const totalGuests = adults + children;
 
-    if (!checkInStr || !checkOutStr) {
-      $btn.disabled = true;
-      $btn.textContent = T('btnSelectDates');
-      $priceDisplay.hidden = true;
-      return;
-    }
-
-    const checkIn = parseDate(checkInStr);
-    const checkOut = parseDate(checkOutStr);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // ── Validation checks ──
+    const result = CORE.validateBooking(PRICING, {
+      checkInStr: checkInStr,
+      checkOutStr: checkOutStr,
+      adults: adults,
+      children: children,
+      today: today,
+      blockedDates: blockedDates,
+    });
 
-    if (checkIn < today) {
-      showMessage(T('msgFutureDate'), 'error');
+    if (!result.ok) {
       $btn.disabled = true;
-      $btn.textContent = T('btnInvalidDates');
       $priceDisplay.hidden = true;
-      return;
-    }
 
-    if (checkOut <= checkIn) {
-      showMessage(T('msgOrder'), 'error');
-      $btn.disabled = true;
-      $btn.textContent = T('btnInvalidDates');
-      $priceDisplay.hidden = true;
-      return;
-    }
-
-    const nights = nightCount(checkIn, checkOut);
-
-    if (nights < PRICING.minNights) {
-      showMessage(T('msgMinStay', { min: PRICING.minNights, n: nights, nightsWord: nightsWord(nights) }), 'error');
-      $btn.disabled = true;
-      $btn.textContent = T('btnTooShort');
-      $priceDisplay.hidden = true;
-      return;
-    }
-
-    // ── Season check: every night must fall in a season ──
-    if (!isOperationalDate(checkIn)) {
-      showMessage(T('msgOpenSeason'), 'warning');
-      $btn.disabled = true;
-      $btn.textContent = T('btnClosedSeason');
-      $priceDisplay.hidden = true;
-      return;
-    }
-
-    // Check each night's date for closed season
-    const cursor = new Date(checkIn);
-    let inClosedSeason = false;
-    while (cursor < checkOut) {
-      if (!isOperationalDate(cursor)) {
-        inClosedSeason = true;
-        break;
+      switch (result.reason) {
+        case 'no-dates':
+          $btn.textContent = T('btnSelectDates');
+          return;
+        case 'past-date':
+          showMessage(T('msgFutureDate'), 'error');
+          $btn.textContent = T('btnInvalidDates');
+          return;
+        case 'bad-order':
+          showMessage(T('msgOrder'), 'error');
+          $btn.textContent = T('btnInvalidDates');
+          return;
+        case 'min-stay':
+          showMessage(T('msgMinStay', { min: PRICING.minNights, n: result.nights, nightsWord: nightsWord(result.nights) }), 'error');
+          $btn.textContent = T('btnTooShort');
+          return;
+        case 'closed-season':
+          showMessage(T('msgOpenSeason'), 'warning');
+          $btn.textContent = T('btnClosedSeason');
+          return;
+        case 'cross-season':
+          showMessage(T('msgCrossSeason'), 'warning');
+          $btn.textContent = T('btnClosedSeason');
+          return;
+        case 'min-guests':
+          showMessage(T('msgMinGuest'), 'error');
+          $btn.textContent = T('btnInvalid');
+          return;
+        case 'max-guests':
+          showMessage(T('msgMaxGuests', { max: PRICING.maxGuests }), 'error');
+          $btn.textContent = T('btnTooManyGuests');
+          return;
+        case 'adult-required':
+          showMessage(T('msgAdultRequired'), 'error');
+          $btn.textContent = T('btnInvalid');
+          return;
+        case 'closed-nights':
+          showMessage(T('msgClosedNights'), 'warning');
+          $btn.textContent = T('btnClosedSeason');
+          return;
+        case 'conflict':
+          showMessage(T('msgConflict', { date: formatDateHuman(result.conflictDate) }), 'error');
+          $btn.textContent = T('btnUnavailable');
+          return;
+        default:
+          return;
       }
-      cursor.setDate(cursor.getDate() + 1);
-    }
-    if (inClosedSeason) {
-      showMessage(T('msgCrossSeason'), 'warning');
-      $btn.disabled = true;
-      $btn.textContent = T('btnClosedSeason');
-      $priceDisplay.hidden = true;
-      return;
-    }
-
-    // ── Guest count ──
-    if (totalGuests < 1) {
-      showMessage(T('msgMinGuest'), 'error');
-      $btn.disabled = true;
-      $btn.textContent = T('btnInvalid');
-      $priceDisplay.hidden = true;
-      return;
-    }
-
-    if (totalGuests > PRICING.maxGuests) {
-      showMessage(T('msgMaxGuests', { max: PRICING.maxGuests }), 'error');
-      $btn.disabled = true;
-      $btn.textContent = T('btnTooManyGuests');
-      $priceDisplay.hidden = true;
-      return;
-    }
-
-    if (adults < 1) {
-      showMessage(T('msgAdultRequired'), 'error');
-      $btn.disabled = true;
-      $btn.textContent = T('btnInvalid');
-      $priceDisplay.hidden = true;
-      return;
-    }
-
-    // ── Calculate price ──
-    const pricing = calculatePrice(checkIn, checkOut);
-
-    if (pricing.closedSeason) {
-      showMessage(T('msgClosedNights'), 'warning');
-      $btn.disabled = true;
-      $btn.textContent = T('btnClosedSeason');
-      $priceDisplay.hidden = true;
-      return;
-    }
-
-    // ── Availability check (iCal blocked dates) ──
-    const availCursor = new Date(checkIn);
-    let conflictDate = null;
-    while (availCursor < checkOut) {
-      if (isBlocked(availCursor)) {
-        conflictDate = new Date(availCursor);
-        break;
-      }
-      availCursor.setDate(availCursor.getDate() + 1);
-    }
-    // Also check checkout day (turn-over rule: it's blocked for incoming,
-    // meaning the current booking's checkout day is fine for THIS booking
-    // but the day itself is blocked for incoming guests — which is us checking in)
-    if (isBlocked(checkIn)) {
-      conflictDate = new Date(checkIn);
-    }
-
-    if (conflictDate) {
-      showMessage(
-        T('msgConflict', { date: formatDateHuman(conflictDate) }),
-        'error'
-      );
-      $btn.disabled = true;
-      $btn.textContent = T('btnUnavailable');
-      $priceDisplay.hidden = true;
-      return;
     }
 
     // ── Show price & enable button ──
     // Only animate price if the value actually changed (prevents flicker on guest count change)
+    const pricing = result.pricing;
     const newPrice = pricing.total;
     if (newPrice !== prevPrice) {
       animatePrice(newPrice);
       prevPrice = newPrice;
     }
     $priceDisplay.hidden = false;
-    $priceBreakdown.textContent = T('breakdown', { nights: pricing.nights, from: formatDateHuman(checkIn), to: formatDateHuman(checkOut) });
+    $priceBreakdown.textContent = T('breakdown', { nights: pricing.nights, from: formatDateHuman(result.checkIn), to: formatDateHuman(result.checkOut) });
 
     // ── Warn if availability data is missing ──
     if (!window.availabilityLoaded) {
@@ -388,7 +268,7 @@
     // Store for redirect
     $btn.dataset.checkin = checkInStr;
     $btn.dataset.checkout = checkOutStr;
-    $btn.dataset.guests = String(totalGuests);
+    $btn.dataset.guests = String(result.totalGuests);
     $btn.dataset.price = String(pricing.total);
     $btn.dataset.nights = String(pricing.nights);
   }
