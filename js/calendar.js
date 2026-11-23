@@ -11,6 +11,8 @@
 (function () {
   'use strict';
 
+  const CORE = window.CALENDAR_CORE;
+
   const $container = document.getElementById('availability-calendar');
   if (!$container) return;
 
@@ -21,14 +23,10 @@
   let viewMonth = new Date();         // first month displayed
   viewMonth.setDate(1);
 
-  const MODE_CHECKIN  = 'checkin';
-  const MODE_CHECKOUT = 'checkout';
-
-  let selectionState = MODE_CHECKIN;  // what the next click selects
+  // Pure date/selection logic is unit-tested in js/calendar-core.js.
+  const selection = CORE.createSelection();  // check-in / check-out state machine
   let focusAfterRender = null;        // dateKey to re-focus after render()
   let activeKey = null;               // dateKey of the calendar's one tab stop
-  let checkinDate  = null;            // Date objects (local midnight)
-  let checkoutDate = null;
 
   // i18n: dictionaries provided by js/i18n.js (must load first).
   // Falls back to English if i18n.js is missing.
@@ -48,58 +46,28 @@
 
   const today = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
 
-  function dateKey(d) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
+  // These helpers live in js/calendar-core.js; see the docs there.
+  const dateKey = CORE.dateKey;
+  const isPast = CORE.isPast;
+  const isClosedSeason = CORE.isClosedSeason;
+  const isBlocked = CORE.isBlocked;
+  const sameDay = CORE.sameDay;
+  const daysBetween = CORE.daysBetween;
+  const monthGridStart = CORE.monthGridStart;
+
+  /** The current selection for the checkout-eligibility check. */
+  function currentSelection() {
+    return {
+      mode: selection.getState().mode,
+      checkinDate: selection.getState().checkinDate,
+      pricing: PRICING,
+      blockedDates: window.blockedDates,
+      today: today,
+    };
   }
 
-  function isPast(d) { return d < today; }
-
-  function isClosedSeason(d) {
-    return PRICING.rateFor(d) === null;
-  }
-
-  function isBlocked(d) {
-    // window.blockedDates is a Set maintained by booking.js
-    return window.blockedDates !== undefined && window.blockedDates.has(dateKey(d));
-  }
-
-  /**
-   * A check-out day is not a night, so booked and off-season days are still
-   * valid to leave on — but only if every night up to it is free, otherwise the
-   * stay would span someone else's booking.
-   */
   function isCheckoutCandidate(d) {
-    if (selectionState !== MODE_CHECKOUT || checkinDate === null) return false;
-    if (isPast(d) || d <= checkinDate) return false;
-
-    const night = new Date(checkinDate);
-    while (night < d) {
-      if (isBlocked(night) || isClosedSeason(night)) return false;
-      night.setDate(night.getDate() + 1);
-    }
-    return true;
-  }
-
-  function sameDay(a, b) {
-    return a && b && a.getFullYear() === b.getFullYear()
-      && a.getMonth() === b.getMonth()
-      && a.getDate() === b.getDate();
-  }
-
-  function daysBetween(a, b) {
-    return Math.round((b - a) / 86400000);
-  }
-
-  /** Returns Date for the Monday-based month grid start. */
-  function monthGridStart(year, month) {
-    const first = new Date(year, month, 1);
-    const dow = (first.getDay() + 6) % 7; // Monday = 0
-    const start = new Date(first);
-    start.setDate(first.getDate() - dow);
-    return start;
+    return CORE.isCheckoutCandidate(d, currentSelection());
   }
 
   // ──────────────────────────────────────────────
@@ -235,9 +203,12 @@
 
         let selectable = false;
 
-        if (isPast(cellDate)) {
+        const checkinDate = selection.getState().checkinDate;
+        const checkoutDate = selection.getState().checkoutDate;
+
+        if (isPast(cellDate, today)) {
           cell.classList.add('past');
-        } else if (isBlocked(cellDate) || isClosedSeason(cellDate)) {
+        } else if (isBlocked(cellDate) || isClosedSeason(cellDate, PRICING)) {
           const reason = isBlocked(cellDate) ? 'alreadyBooked' : 'closedTooltip';
           cell.classList.add(isBlocked(cellDate) ? 'blocked' : 'closed');
           cell.title = T(reason);
@@ -264,7 +235,7 @@
 
         if (selectable) {
           makeSelectable(cell, cellDate);
-        } else if (!isPast(cellDate)) {
+        } else if (!isPast(cellDate, today)) {
           // Booked and closed days can be reached with the arrow keys, so
           // their reason is read out, but not picked.
           cell.setAttribute('role', 'button');
@@ -324,15 +295,13 @@
       case 'PageDown': {
         // The same day a month away, or that month's last day: 31 March goes
         // to 28 February, where setMonth alone would land on 3 March.
-        const day = d.getDate();
-        d.setDate(1);
-        d.setMonth(d.getMonth() + (key === 'PageUp' ? -1 : 1));
-        d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
+        const moved = CORE.monthDelta(d, key === 'PageUp' ? -1 : 1);
+        d.setFullYear(moved.getFullYear(), moved.getMonth(), moved.getDate());
         break;
       }
       default: return false;
     }
-    const target = isPast(d) ? new Date(today) : d;
+    const target = isPast(d, today) ? new Date(today) : d;
     activeKey = focusAfterRender = dateKey(target);
 
     const first = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
@@ -355,35 +324,21 @@
   }
 
   function describeDate(d) {
-    if (isBlocked(d) || isClosedSeason(d)) return `${dayLabel(d)} — ${T('checkoutOnly')}`;
+    if (isBlocked(d) || isClosedSeason(d, PRICING)) return `${dayLabel(d)} — ${T('checkoutOnly')}`;
     return dayLabel(d);
   }
 
   function handleDateClick(d) {
-    if (selectionState === MODE_CHECKIN) {
-      checkinDate = d;
-      checkoutDate = null;
-      selectionState = MODE_CHECKOUT;
-    } else {
-      // User clicked checkout date
-      if (d <= checkinDate) {
-        // Clicked before check-in: treat as new check-in
-        checkinDate = d;
-        checkoutDate = null;
-        selectionState = MODE_CHECKOUT;
-      } else {
-        checkoutDate = d;
-        selectionState = MODE_CHECKIN; // ready for new selection if they re-click
-      }
-    }
+    selection.click(d); // the state machine lives in js/calendar-core.js
     render();
     emitSelection();
   }
 
   function emitSelection() {
+    const state = selection.getState();
     const detail = {
-      checkin:  checkinDate  ? dateKey(checkinDate)  : null,
-      checkout: checkoutDate ? dateKey(checkoutDate) : null,
+      checkin:  state.checkinDate  ? dateKey(state.checkinDate)  : null,
+      checkout: state.checkoutDate ? dateKey(state.checkoutDate) : null,
     };
     $container.dispatchEvent(new CustomEvent('dateselected', { detail, bubbles: true }));
   }
